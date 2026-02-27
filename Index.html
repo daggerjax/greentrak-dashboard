@@ -69,7 +69,6 @@ td .muted, .sub, .lbl { -webkit-font-smoothing: antialiased; }
   td{padding:10px 12px}
 }
 
-
 /* toast */
 #toastHint{
   position:fixed;left:12px;right:12px;bottom:calc(12px + var(--safe-bottom));
@@ -80,7 +79,6 @@ td .muted, .sub, .lbl { -webkit-font-smoothing: antialiased; }
 #toastHint .t{font-size:11px;color:#e2e8f0;line-height:1.3}
 #toastHint .s{font-size:9px;color:#94a3b8;margin-top:3px}
 #toastHint .x{position:absolute;right:10px;top:8px;cursor:pointer;color:#94a3b8;font-size:14px;line-height:14px}
-
 </style>
 </head>
 <body>
@@ -91,12 +89,14 @@ td .muted, .sub, .lbl { -webkit-font-smoothing: antialiased; }
   <div class="s">On iPhone/iPad: Share → “Add Bookmark” (Chrome) or Share → “Add to Home Screen” (Safari).</div>
 </div>
 
+<!-- LOADING (standalone) -->
 <div id="loading">
   <div class="logo">G</div>
   <div style="font-size:14px;color:#94a3b8" id="loadMsg">Loading portfolio from Google Sheets...</div>
   <div style="font-size:10px;color:#475569" id="loadSub">Connecting to live data feed</div>
 </div>
 
+<!-- SETUP (standalone; MUST NOT be inside #loading) -->
 <div id="setup" style="display:none;min-height:100vh;padding:34px 18px;max-width:900px;margin:0 auto">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
     <div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#10b981,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#0a0e17">G</div>
@@ -137,13 +137,15 @@ td .muted, .sub, .lbl { -webkit-font-smoothing: antialiased; }
   </div>
 </div>
 
-</div>
+<!-- APP -->
 <div id="app">
   <div style="border-bottom:1px solid #1e293b;padding:14px 24px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,#0f1420,#0a0e17);flex-wrap:wrap;gap:10px">
     <div style="display:flex;align-items:center;gap:12px">
       <div style="width:30px;height:30px;border-radius:6px;background:linear-gradient(135deg,#10b981,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#0a0e17">G</div>
-      <div><div class="dm" style="font-weight:700;font-size:16px;color:#f1f5f9">GreenTrak</div>
-      <div style="font-size:8px;color:#94a3b8;letter-spacing:1.5px;text-transform:uppercase">Portfolio Intelligence · Live from Google Sheets</div></div>
+      <div>
+        <div class="dm" style="font-weight:700;font-size:16px;color:#f1f5f9">GreenTrak</div>
+        <div style="font-size:8px;color:#94a3b8;letter-spacing:1.5px;text-transform:uppercase">Portfolio Intelligence · Live from Google Sheets</div>
+      </div>
     </div>
     <div style="display:flex;align-items:center;gap:10px">
       <button class="rfb" id="refreshBtn" onclick="fetchData()">↻ Refresh</button>
@@ -157,6 +159,7 @@ td .muted, .sub, .lbl { -webkit-font-smoothing: antialiased; }
       </div>
     </div>
   </div>
+
   <div id="mainWrap" style="padding:16px 24px;max-width:1400px;margin:0 auto">
     <div id="summary" class="grid5 fu" style="margin-bottom:16px"></div>
     <div id="benchmarks" class="fu" style="margin-bottom:16px"></div>
@@ -174,7 +177,7 @@ td .muted, .sub, .lbl { -webkit-font-smoothing: antialiased; }
   </div>
 </div>
 
-
+<!-- SETTINGS MODAL -->
 <div id="settingsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:200;align-items:center;justify-content:center;padding:22px">
   <div class="card" style="max-width:760px;width:100%;border-radius:12px;padding:16px 16px 14px;background:#0f1420">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
@@ -223,6 +226,7 @@ const DEFAULT_REFRESH_SEC=60;
 let PROXY_URL = (localStorage.getItem(LS_PROXY_KEY)||"").trim();
 let REFRESH_SEC = parseInt(localStorage.getItem(LS_REFRESH_KEY)||String(DEFAULT_REFRESH_SEC),10);
 if(!Number.isFinite(REFRESH_SEC) || REFRESH_SEC<10) REFRESH_SEC=DEFAULT_REFRESH_SEC;
+
 let DATA=null,currentTab='overview',countdown=REFRESH_SEC,timerInterval=null;
 
 // Sorting state (Holdings tab)
@@ -345,8 +349,6 @@ function makeNewsUrl(headline, symbol){
   return `https://news.google.com/search?q=${encodeURIComponent(q)}&hl=en-US&gl=US&ceid=US:en`;
 }
 
-// Fetch
-
 // ─── LOCAL SETTINGS / MULTI-USER ───────────────────────────────────────────
 function showSetup(){
   document.getElementById('loading').style.display='none';
@@ -367,7 +369,6 @@ function saveProxyFromSetup(){
   if(!v) return alert('Paste your Apps Script proxy URL first.');
   PROXY_URL=v;
   localStorage.setItem(LS_PROXY_KEY, PROXY_URL);
-  // Default refresh if unset
   if(!localStorage.getItem(LS_REFRESH_KEY)) localStorage.setItem(LS_REFRESH_KEY, String(REFRESH_SEC));
   hideSetup();
   countdown=REFRESH_SEC;
@@ -376,8 +377,6 @@ function saveProxyFromSetup(){
 }
 
 function prefillDavid(){
-  // Optional convenience: paste your own URL instead (recommended).
-  // Leaving this blank keeps the page “clean” for sharing.
   const demo = "";
   const inp=document.getElementById('proxyInput');
   if(!demo) return alert('No demo URL is embedded. Paste your own proxy URL.');
@@ -406,7 +405,7 @@ function saveSettings(){
   localStorage.setItem(LS_REFRESH_KEY, String(REFRESH_SEC));
   closeSettings();
   fetchData();
-  startTimer(); // restart timer with new interval
+  startTimer();
 }
 
 async function testConnection(){
@@ -448,12 +447,13 @@ async function fetchData(){
   const btn=document.getElementById('refreshBtn');
   btn.innerHTML='<span class="spinner"></span>Fetching...';btn.classList.add('loading');
   try{
-    const res=await fetch(PROXY_URL);
+    const res=await fetch(PROXY_URL, {cache:'no-store'});
     if(!res.ok)throw new Error('HTTP '+res.status);
     const text=await res.text();
     if(!text||text.length<50)throw new Error('Empty response');
     DATA=parseData(text);
     document.getElementById('loading').style.display='none';
+    document.getElementById('setup').style.display='none';
     document.getElementById('app').style.display='block';
     document.getElementById('statusDot').style.background='#10b981';
     render();
@@ -531,6 +531,7 @@ function render(){
   const topG=[...ll].sort((a,b)=>(b.dollarGL||0)-(a.dollarGL||0)).slice(0,5);
   const topL=[...ll].sort((a,b)=>(a.dollarGL||0)-(b.dollarGL||0)).slice(0,5);
   const top10=[...ll].sort((a,b)=>(b.value||0)-(a.value||0)).slice(0,10);
+  // shorts: most negative value first
   const top10S=[...sl].sort((a,b)=>(a.value||0)-(b.value||0)).slice(0,10);
 
   const mkList=(items,color)=>items.map((p,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;${i<4?'border-bottom:1px solid #1a1f2e':''}"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:9px;color:#94a3b8;width:14px">${i+1}</span><span style="font-weight:600;font-size:12px;color:#f1f5f9">${esc(p.symbol)}</span><span style="font-size:9px;color:#cbd5e1">${Math.abs(p.qty).toLocaleString()}sh</span></div><div style="text-align:right"><span style="font-size:12px;font-weight:600;color:${color}">${fmt(p.dollarGL)}</span><span style="font-size:9px;color:${color};margin-left:6px">${p.pctGL!==null?fmtP(p.pctGL):''}</span></div></div>`).join('');
@@ -593,7 +594,7 @@ function renderHoldings(){
   all.sort((a,b)=>{
     const va=sortValue(a,key),vb=sortValue(b,key);
     if(typeof va==='string'||typeof vb==='string'){
-      const sa=String((va==null?'':va)).toUpperCase(),sb=String((vb==null?'':vb)).toUpperCase();
+      const sa=String(va??'').toUpperCase(),sb=String(vb??'').toUpperCase();
       if(sa<sb)return dir==='asc'?-1:1;
       if(sa>sb)return dir==='asc'?1:-1;
       return 0;
@@ -638,7 +639,6 @@ if(!PROXY_URL){
     const t = e.touches ? e.touches[0] : e;
     const dx = t.clientX - startX;
     const dy = t.clientY - startY;
-    // if user is scrolling vertically, ignore
     if(Math.abs(dy) > Math.abs(dx)) tracking = false;
   };
   const onEnd = (e)=>{
@@ -649,15 +649,14 @@ if(!PROXY_URL){
     tracking = false;
     if(Math.abs(dx) < 60 || Math.abs(dy) > 60) return;
 
-    if(dx < 0 && currentTab === 'overview') switchTab('holdings'); // swipe left
-    if(dx > 0 && currentTab === 'holdings') switchTab('overview'); // swipe right
+    if(dx < 0 && currentTab === 'overview') switchTab('holdings');
+    if(dx > 0 && currentTab === 'holdings') switchTab('overview');
   };
 
   el.addEventListener('touchstart', onStart, {passive:true});
   el.addEventListener('touchmove', onMove, {passive:true});
   el.addEventListener('touchend', onEnd, {passive:true});
 })();
-
 
 // ─── Hint toast (mobile only, one-time) ─────────────────────────────────────
 (function mobileHint(){
@@ -667,14 +666,19 @@ if(!PROXY_URL){
     if(!isMobile) return;
     const toast = document.getElementById('toastHint');
     if(!toast) return;
-    // show after first successful render (or 2s)
     setTimeout(()=>{ 
-      // only show if app loaded
       if(typeof DATA !== 'undefined' && DATA) toast.style.display='block';
     }, 2200);
   }catch(e){}
 })();
 
+// Small UX: ESC closes settings modal
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape'){
+    const m=document.getElementById('settingsModal');
+    if(m && m.style.display === 'flex') closeSettings();
+  }
+});
 </script>
 </body>
 </html>
