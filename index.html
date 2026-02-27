@@ -95,6 +95,47 @@ td .muted, .sub, .lbl { -webkit-font-smoothing: antialiased; }
   <div class="logo">G</div>
   <div style="font-size:14px;color:#94a3b8" id="loadMsg">Loading portfolio from Google Sheets...</div>
   <div style="font-size:10px;color:#475569" id="loadSub">Connecting to live data feed</div>
+
+<div id="setup" style="display:none;min-height:100vh;padding:34px 18px;max-width:900px;margin:0 auto">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
+    <div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#10b981,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#0a0e17">G</div>
+    <div>
+      <div class="dm" style="font-weight:800;font-size:18px;color:#f1f5f9;letter-spacing:-.2px">GreenTrak</div>
+      <div style="font-size:10px;color:#94a3b8;letter-spacing:1.2px;text-transform:uppercase">Portfolio Intelligence · BYO Sheet</div>
+    </div>
+  </div>
+
+  <div class="card" style="padding:18px;border-radius:10px">
+    <div class="dm" style="font-weight:800;font-size:16px;color:#f1f5f9;margin-bottom:6px">Connect your Google Sheet</div>
+    <div style="font-size:11px;color:#94a3b8;line-height:1.6;margin-bottom:14px">
+      This dashboard runs locally in your browser. Your data source URL is stored only in <b>this</b> browser (localStorage).
+      Share this page freely — others won’t see your portfolio unless they add their own proxy URL.
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr;gap:10px">
+      <label class="lbl" style="margin:0">Apps Script Proxy URL</label>
+      <input id="proxyInput" placeholder="https://script.google.com/macros/s/…/exec"
+        style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #1e293b;background:#0a0e17;color:#e2e8f0;font-family:inherit;font-size:11px;outline:none" />
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:4px">
+        <button class="rfb" onclick="prefillDavid()" title="Optional">Use David’s demo URL</button>
+        <button class="tb a" onclick="saveProxyFromSetup()">Save & Load</button>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;border-top:1px solid #151b2b;padding-top:14px">
+      <div class="dm" style="font-weight:700;color:#cbd5e1;margin-bottom:6px">Need a proxy?</div>
+      <div style="font-size:11px;color:#94a3b8;line-height:1.6">
+        Create a new Google Apps Script web app that returns the <b>Holdings</b> tab as TSV/CSV. Paste the URL above.
+        If you want, I can generate the exact script + publish steps for your sheet.
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;padding:18px 0 6px;font-size:9px;color:#475569;margin-top:18px">
+    GreenTrak Portfolio Intelligence · Local-only settings · No server
+  </div>
+</div>
+
 </div>
 <div id="app">
   <div style="border-bottom:1px solid #1e293b;padding:14px 24px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,#0f1420,#0a0e17);flex-wrap:wrap;gap:10px">
@@ -105,6 +146,7 @@ td .muted, .sub, .lbl { -webkit-font-smoothing: antialiased; }
     </div>
     <div style="display:flex;align-items:center;gap:10px">
       <button class="rfb" id="refreshBtn" onclick="fetchData()">↻ Refresh</button>
+      <button class="rfb" onclick="openSettings()" title="Settings">⚙</button>
       <div style="text-align:right">
         <div id="dateStr" style="font-size:11px;color:#94a3b8"></div>
         <div style="display:flex;align-items:center;gap:5px;justify-content:flex-end;margin-top:2px">
@@ -131,9 +173,55 @@ td .muted, .sub, .lbl { -webkit-font-smoothing: antialiased; }
   </div>
 </div>
 
+
+<div id="settingsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:200;align-items:center;justify-content:center;padding:22px">
+  <div class="card" style="max-width:760px;width:100%;border-radius:12px;padding:16px 16px 14px;background:#0f1420">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
+      <div class="dm" style="font-weight:800;font-size:15px;color:#f1f5f9">Settings</div>
+      <button class="rfb" onclick="closeSettings()">Close</button>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr;gap:10px">
+      <div>
+        <div class="lbl">Apps Script Proxy URL</div>
+        <input id="settingsProxy" placeholder="https://script.google.com/macros/s/…/exec"
+          style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid #1e293b;background:#0a0e17;color:#e2e8f0;font-family:inherit;font-size:11px;outline:none" />
+        <div style="font-size:10px;color:#64748b;margin-top:6px;line-height:1.5">
+          Stored only in this browser. Clearing site data resets it.
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;margin-top:6px">
+        <div style="min-width:240px;flex:1">
+          <div class="lbl">Auto-refresh</div>
+          <select id="settingsRefresh" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid #1e293b;background:#0a0e17;color:#e2e8f0;font-family:inherit;font-size:11px;outline:none">
+            <option value="30">30 seconds</option>
+            <option value="60">60 seconds</option>
+            <option value="120">2 minutes</option>
+            <option value="300">5 minutes</option>
+          </select>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+          <button class="rfb" onclick="testConnection()">Test Connection</button>
+          <button class="rfb" onclick="resetAll()" title="Clears local settings">Reset</button>
+          <button class="tb a" onclick="saveSettings()">Save</button>
+        </div>
+      </div>
+
+      <div id="testResult" style="display:none;margin-top:8px;padding:10px 12px;border-radius:10px;border:1px solid #1e293b;background:#0a0e17;color:#cbd5e1;font-size:11px;line-height:1.5"></div>
+    </div>
+  </div>
+</div>
+
 <script>
-const PROXY_URL="https://script.google.com/macros/s/AKfycbxyEGTi3O4VIUym645V5eelO7-q_G86Cdmvee54-iusizxdb7oAUQrDi3NhwqzaCbbE/exec";
-const REFRESH_SEC=60;
+const LS_PROXY_KEY="greentrak_proxy_url";
+const LS_REFRESH_KEY="greentrak_refresh_sec";
+const DEFAULT_REFRESH_SEC=60;
+
+let PROXY_URL = (localStorage.getItem(LS_PROXY_KEY)||"").trim();
+let REFRESH_SEC = parseInt(localStorage.getItem(LS_REFRESH_KEY)||String(DEFAULT_REFRESH_SEC),10);
+if(!Number.isFinite(REFRESH_SEC) || REFRESH_SEC<10) REFRESH_SEC=DEFAULT_REFRESH_SEC;
 let DATA=null,currentTab='overview',countdown=REFRESH_SEC,timerInterval=null;
 
 // Sorting state (Holdings tab)
@@ -257,7 +345,105 @@ function makeNewsUrl(headline, symbol){
 }
 
 // Fetch
+
+// ─── LOCAL SETTINGS / MULTI-USER ───────────────────────────────────────────
+function showSetup(){
+  document.getElementById('loading').style.display='none';
+  document.getElementById('app').style.display='none';
+  document.getElementById('setup').style.display='block';
+  const inp=document.getElementById('proxyInput');
+  if(inp) inp.value = PROXY_URL || '';
+}
+
+function hideSetup(){
+  document.getElementById('setup').style.display='none';
+  document.getElementById('loading').style.display='none';
+  document.getElementById('app').style.display='block';
+}
+
+function saveProxyFromSetup(){
+  const v=(document.getElementById('proxyInput').value||'').trim();
+  if(!v) return alert('Paste your Apps Script proxy URL first.');
+  PROXY_URL=v;
+  localStorage.setItem(LS_PROXY_KEY, PROXY_URL);
+  // Default refresh if unset
+  if(!localStorage.getItem(LS_REFRESH_KEY)) localStorage.setItem(LS_REFRESH_KEY, String(REFRESH_SEC));
+  hideSetup();
+  countdown=REFRESH_SEC;
+  fetchData();
+  startTimer();
+}
+
+function prefillDavid(){
+  // Optional convenience: paste your own URL instead (recommended).
+  // Leaving this blank keeps the page “clean” for sharing.
+  const demo = "";
+  const inp=document.getElementById('proxyInput');
+  if(!demo) return alert('No demo URL is embedded. Paste your own proxy URL.');
+  inp.value=demo;
+}
+
+function openSettings(){
+  document.getElementById('testResult').style.display='none';
+  document.getElementById('settingsProxy').value = PROXY_URL || '';
+  document.getElementById('settingsRefresh').value = String(REFRESH_SEC);
+  document.getElementById('settingsModal').style.display='flex';
+}
+
+function closeSettings(){
+  document.getElementById('settingsModal').style.display='none';
+}
+
+function saveSettings(){
+  const proxy=(document.getElementById('settingsProxy').value||'').trim();
+  const refresh=parseInt(document.getElementById('settingsRefresh').value,10);
+  if(!proxy) return alert('Proxy URL is required.');
+  PROXY_URL=proxy;
+  REFRESH_SEC=Number.isFinite(refresh)?refresh:DEFAULT_REFRESH_SEC;
+  countdown=REFRESH_SEC;
+  localStorage.setItem(LS_PROXY_KEY, PROXY_URL);
+  localStorage.setItem(LS_REFRESH_KEY, String(REFRESH_SEC));
+  closeSettings();
+  fetchData();
+  startTimer(); // restart timer with new interval
+}
+
+async function testConnection(){
+  const box=document.getElementById('testResult');
+  box.style.display='block';
+  box.textContent='Testing…';
+  const proxy=(document.getElementById('settingsProxy').value||'').trim() || PROXY_URL;
+  if(!proxy){ box.textContent='Missing proxy URL.'; return; }
+  const t0=performance.now();
+  try{
+    const res=await fetch(proxy, {cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const text=await res.text();
+    const t1=performance.now();
+    const parsed=parseData(text);
+    const ms=Math.round(t1-t0);
+    box.innerHTML = '<b style="color:#10b981">OK</b> · '+ms+'ms · '
+      +parsed.positions.length+' positions · '+parsed.benchmarks.length+' benchmarks';
+  }catch(e){
+    box.innerHTML = '<b style="color:#ef4444">Failed</b> · '+esc(e.message||String(e));
+  }
+}
+
+function resetAll(){
+  if(!confirm('Reset settings on this device? (This does not affect your Google Sheet.)')) return;
+  localStorage.removeItem(LS_PROXY_KEY);
+  localStorage.removeItem(LS_REFRESH_KEY);
+  PROXY_URL='';
+  REFRESH_SEC=DEFAULT_REFRESH_SEC;
+  countdown=REFRESH_SEC;
+  closeSettings();
+  DATA=null;
+  showSetup();
+}
+
 async function fetchData(){
+  if(!PROXY_URL){ showSetup(); return; }
+
   const btn=document.getElementById('refreshBtn');
   btn.innerHTML='<span class="spinner"></span>Fetching...';btn.classList.add('loading');
   try{
@@ -427,8 +613,12 @@ function renderHoldings(){
 }
 
 // Boot
-fetchData();
-startTimer();
+if(!PROXY_URL){
+  showSetup();
+} else {
+  fetchData();
+  startTimer();
+}
 
 // ─── MOBILE: swipe between tabs (Overview ↔ Holdings) ───────────────────────
 (function enableSwipeTabs(){
