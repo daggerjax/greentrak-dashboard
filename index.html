@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e17">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GreenTrak">
+<meta name="format-detection" content="telephone=no">
+<title>GreenTrak — Portfolio Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Mono','Fira Code',monospace;background:#0a0e17;color:#e2e8f0;min-height:100vh}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:#1a1f2e}::-webkit-scrollbar-thumb{background:#334155;border-radius:3px}
+@keyframes fu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pl{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.fu{animation:fu .4s ease-out both}
+.card{background:#0f1420;border:1px solid #1e293b;border-radius:6px;padding:14px}
+.row-h:hover{background:rgba(99,102,241,0.05)!important}
+.tb{padding:6px 16px;border:1px solid #1e293b;background:transparent;color:#94a3b8;cursor:pointer;font-size:11px;font-family:inherit;letter-spacing:.5px;text-transform:uppercase;transition:all .2s;border-radius:4px}
+.tb:hover{border-color:#475569;color:#e2e8f0}.tb.a{background:#6366f1;border-color:#6366f1;color:#fff}
+.rfb{padding:5px 14px;border:1px solid #1e293b;background:transparent;color:#94a3b8;cursor:pointer;font-size:10px;font-family:inherit;border-radius:4px;transition:all .2s}
+.rfb:hover{border-color:#6366f1;color:#e2e8f0;background:rgba(99,102,241,.08)}
+.rfb.loading{pointer-events:none;opacity:.6}
+.dm{font-family:'DM Sans',sans-serif}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.lbl{font-size:8px;color:#94a3b8;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:6px}
+.big{font-family:'DM Sans',sans-serif;font-size:20px;font-weight:700;letter-spacing:-.5px}
+.sub{font-size:10px;margin-top:3px}
+.sect{font-size:9px;letter-spacing:1.2px;margin-bottom:10px;font-weight:600}
+.pill{padding:2px 7px;border-radius:3px;font-size:10px;font-weight:600;display:inline-block}
+.tag{font-size:9px;font-weight:700;color:#06b6d4;background:rgba(6,182,212,0.1);padding:1px 6px;border-radius:3px}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{padding:8px 12px;font-size:8px;color:#94a3b8;letter-spacing:1px;font-weight:600;border-bottom:1px solid #1e293b;text-transform:uppercase;cursor:pointer;user-select:none;position:relative}
+th:hover{color:#e2e8f0}
+th .sort{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:10px;color:#64748b}
+td{padding:6px 12px;border-bottom:1px solid #151b2b}
+a.news{color:#e2e8f0;text-decoration:none}
+a.news:hover{text-decoration:underline}
+#loading{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;min-height:100vh;padding:40px}
+#loading .logo{width:40px;height:40px;border-radius:8px;background:linear-gradient(135deg,#10b981,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#0a0e17;animation:pl 1.5s infinite}
+#app{display:none}
+.spinner{width:14px;height:14px;border:2px solid #1e293b;border-top-color:#6366f1;border-radius:50%;animation:spin .6s linear infinite;display:inline-block;vertical-align:middle;margin-right:6px}
+@media(max-width:900px){.grid5{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+
+/* Mobile polish */
+:root{
+  --safe-top: env(safe-area-inset-top);
+  --safe-bottom: env(safe-area-inset-bottom);
+}
+body{padding-top:var(--safe-top);padding-bottom:var(--safe-bottom);}
+.tb,.rfb{min-height:34px}
+.tb{padding:8px 16px}
+.rfb{padding:7px 14px}
+/* make qty / small numerics slightly brighter */
+td .muted, .sub, .lbl { -webkit-font-smoothing: antialiased; }
+
+/* sticky tabs on small screens */
+@media(max-width:900px){
+  #tabs{position:sticky;top:calc(52px + var(--safe-top));z-index:5;background:rgba(10,14,23,0.75);backdrop-filter: blur(8px);padding:10px 0}
+  #tabs .tb{flex:1;text-align:center}
+  #tabs{display:flex}
+  .card{border-radius:10px}
+  th{padding:10px 12px}
+  td{padding:10px 12px}
+}
+
+
+/* toast */
+#toastHint{
+  position:fixed;left:12px;right:12px;bottom:calc(12px + var(--safe-bottom));
+  background:rgba(15,20,32,0.92);border:1px solid #1e293b;border-radius:10px;
+  padding:10px 12px;z-index:120;display:none;backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+#toastHint .t{font-size:11px;color:#e2e8f0;line-height:1.3}
+#toastHint .s{font-size:9px;color:#94a3b8;margin-top:3px}
+#toastHint .x{position:absolute;right:10px;top:8px;cursor:pointer;color:#94a3b8;font-size:14px;line-height:14px}
+
+</style>
+</head>
+<body>
+
+<div id="toastHint">
+  <div class="x" onclick="document.getElementById('toastHint').style.display='none';localStorage.setItem('gt_hide_toast','1')">×</div>
+  <div class="t">Tip: add this dashboard to your <b>Bookmarks</b> for one-tap access.</div>
+  <div class="s">On iPhone/iPad: Share → “Add Bookmark” (Chrome) or Share → “Add to Home Screen” (Safari).</div>
+</div>
+
+<div id="loading">
+  <div class="logo">G</div>
+  <div style="font-size:14px;color:#94a3b8" id="loadMsg">Loading portfolio from Google Sheets...</div>
+  <div style="font-size:10px;color:#475569" id="loadSub">Connecting to live data feed</div>
+
+<div id="setup" style="display:none;min-height:100vh;padding:34px 18px;max-width:900px;margin:0 auto">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
+    <div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#10b981,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#0a0e17">G</div>
+    <div>
+      <div class="dm" style="font-weight:800;font-size:18px;color:#f1f5f9;letter-spacing:-.2px">GreenTrak</div>
+      <div style="font-size:10px;color:#94a3b8;letter-spacing:1.2px;text-transform:uppercase">Portfolio Intelligence · BYO Sheet</div>
+    </div>
+  </div>
+
+  <div class="card" style="padding:18px;border-radius:10px">
+    <div class="dm" style="font-weight:800;font-size:16px;color:#f1f5f9;margin-bottom:6px">Connect your Google Sheet</div>
+    <div style="font-size:11px;color:#94a3b8;line-height:1.6;margin-bottom:14px">
+      This dashboard runs locally in your browser. Your data source URL is stored only in <b>this</b> browser (localStorage).
+      Share this page freely — others won’t see your portfolio unless they add their own proxy URL.
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr;gap:10px">
+      <label class="lbl" style="margin:0">Apps Script Proxy URL</label>
+      <input id="proxyInput" placeholder="https://script.google.com/macros/s/…/exec"
+        style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #1e293b;background:#0a0e17;color:#e2e8f0;font-family:inherit;font-size:11px;outline:none" />
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:4px">
+        <button class="rfb" onclick="prefillDavid()" title="Optional">Use David’s demo URL</button>
+        <button class="tb a" onclick="saveProxyFromSetup()">Save & Load</button>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;border-top:1px solid #151b2b;padding-top:14px">
+      <div class="dm" style="font-weight:700;color:#cbd5e1;margin-bottom:6px">Need a proxy?</div>
+      <div style="font-size:11px;color:#94a3b8;line-height:1.6">
+        Create a new Google Apps Script web app that returns the <b>Holdings</b> tab as TSV/CSV. Paste the URL above.
+        If you want, I can generate the exact script + publish steps for your sheet.
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;padding:18px 0 6px;font-size:9px;color:#475569;margin-top:18px">
+    GreenTrak Portfolio Intelligence · Local-only settings · No server
+  </div>
+</div>
+
+</div>
+<div id="app">
+  <div style="border-bottom:1px solid #1e293b;padding:14px 24px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,#0f1420,#0a0e17);flex-wrap:wrap;gap:10px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:30px;height:30px;border-radius:6px;background:linear-gradient(135deg,#10b981,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#0a0e17">G</div>
+      <div><div class="dm" style="font-weight:700;font-size:16px;color:#f1f5f9">GreenTrak</div>
+      <div style="font-size:8px;color:#94a3b8;letter-spacing:1.5px;text-transform:uppercase">Portfolio Intelligence · Live from Google Sheets</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="rfb" id="refreshBtn" onclick="fetchData()">↻ Refresh</button>
+      <button class="rfb" onclick="openSettings()" title="Settings">⚙</button>
+      <div style="text-align:right">
+        <div id="dateStr" style="font-size:11px;color:#94a3b8"></div>
+        <div style="display:flex;align-items:center;gap:5px;justify-content:flex-end;margin-top:2px">
+          <div id="statusDot" style="width:5px;height:5px;border-radius:50%;background:#10b981;animation:pl 2s infinite"></div>
+          <span id="statusStr" style="font-size:9px;color:#94a3b8"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="mainWrap" style="padding:16px 24px;max-width:1400px;margin:0 auto">
+    <div id="summary" class="grid5 fu" style="margin-bottom:16px"></div>
+    <div id="benchmarks" class="fu" style="margin-bottom:16px"></div>
+    <div id="vsBar" class="card fu" style="margin-bottom:16px;padding:8px 14px;display:flex;align-items:center;gap:20px;font-size:10px;flex-wrap:wrap"></div>
+    <div id="tabs" style="display:flex;gap:6px;margin-bottom:16px">
+      <button class="tb a" onclick="switchTab('overview')">Overview</button>
+      <button class="tb" onclick="switchTab('holdings')">Holdings</button>
+    </div>
+    <div id="tab-overview" class="grid2 fu"></div>
+    <div id="tab-holdings" class="fu" style="display:none"></div>
+    <div style="text-align:center;padding:20px 0 8px;font-size:9px;color:#475569;border-top:1px solid #151b2b;margin-top:20px">
+      GreenTrak Portfolio Intelligence · Live via GOOGLEFINANCE() · Auto-refreshes every 60s
+      <br><span style="color:#64748b">Continuing the vision from 1993 — consolidated, unbiased investment reporting</span>
+    </div>
+  </div>
+</div>
+
+
+<div id="settingsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:200;align-items:center;justify-content:center;padding:22px">
+  <div class="card" style="max-width:760px;width:100%;border-radius:12px;padding:16px 16px 14px;background:#0f1420">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
+      <div class="dm" style="font-weight:800;font-size:15px;color:#f1f5f9">Settings</div>
+      <button class="rfb" onclick="closeSettings()">Close</button>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr;gap:10px">
+      <div>
+        <div class="lbl">Apps Script Proxy URL</div>
+        <input id="settingsProxy" placeholder="https://script.google.com/macros/s/…/exec"
+          style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid #1e293b;background:#0a0e17;color:#e2e8f0;font-family:inherit;font-size:11px;outline:none" />
+        <div style="font-size:10px;color:#64748b;margin-top:6px;line-height:1.5">
+          Stored only in this browser. Clearing site data resets it.
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;margin-top:6px">
+        <div style="min-width:240px;flex:1">
+          <div class="lbl">Auto-refresh</div>
+          <select id="settingsRefresh" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid #1e293b;background:#0a0e17;color:#e2e8f0;font-family:inherit;font-size:11px;outline:none">
+            <option value="30">30 seconds</option>
+            <option value="60">60 seconds</option>
+            <option value="120">2 minutes</option>
+            <option value="300">5 minutes</option>
+          </select>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+          <button class="rfb" onclick="testConnection()">Test Connection</button>
+          <button class="rfb" onclick="resetAll()" title="Clears local settings">Reset</button>
+          <button class="tb a" onclick="saveSettings()">Save</button>
+        </div>
+      </div>
+
+      <div id="testResult" style="display:none;margin-top:8px;padding:10px 12px;border-radius:10px;border:1px solid #1e293b;background:#0a0e17;color:#cbd5e1;font-size:11px;line-height:1.5"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const LS_PROXY_KEY="greentrak_proxy_url";
+const LS_REFRESH_KEY="greentrak_refresh_sec";
+const DEFAULT_REFRESH_SEC=60;
+
+let PROXY_URL = (localStorage.getItem(LS_PROXY_KEY)||"").trim();
+let REFRESH_SEC = parseInt(localStorage.getItem(LS_REFRESH_KEY)||String(DEFAULT_REFRESH_SEC),10);
+if(!Number.isFinite(REFRESH_SEC) || REFRESH_SEC<10) REFRESH_SEC=DEFAULT_REFRESH_SEC;
+let DATA=null,currentTab='overview',countdown=REFRESH_SEC,timerInterval=null;
+
+// Sorting state (Holdings tab)
+let sortKey='absValue';
+let sortDir='desc';
+
+// News: clickable. If url omitted, auto-generate Google News search.
+const MKT_NEWS=[
+  {t:"Fed Holds Rates Steady, Signals Patience on Cuts",src:"Reuters",ago:"2h",m:"n"},
+  {t:"NVIDIA Data Center Revenue Surges Past Estimates",src:"Bloomberg",ago:"3h",m:"u"},
+  {t:"Treasury Yields Rise on Strong Employment Data",src:"CNBC",ago:"4h",m:"d"},
+  {t:"Apple Rolls Out Expanded AI Features Globally",src:"WSJ",ago:"5h",m:"u"},
+  {t:"S&P 500 Touches Fresh Intraday Record",src:"MarketWatch",ago:"1h",m:"u"},
+  {t:"Semiconductor Stocks Lead Market Rally",src:"Barron's",ago:"2h",m:"u"},
+];
+const PORT_NEWS=[
+  {t:"Jensen Huang Unveils Next-Gen Blackwell Ultra Architecture",sym:"NVDA",src:"Bloomberg",ago:"1h",m:"u"},
+  {t:"Aviation Services Division Posts Record Quarterly Bookings",sym:"FTAI",src:"Barron's",ago:"2h",m:"u"},
+  {t:"AWS Announces Major Expansion of AI Infrastructure",sym:"AMZN",src:"Reuters",ago:"2h",m:"u"},
+  {t:"Robotaxi Rollout Timeline Pushed Back to Late 2026",sym:"TSLA",src:"CNBC",ago:"3h",m:"d"},
+  {t:"Wins $480M Defense Contract for AI Analytics Platform",sym:"PLTR",src:"WSJ",ago:"3h",m:"u"},
+  {t:"Subscriber Growth Beats Expectations in Q4 Report",sym:"NFLX",src:"Variety",ago:"4h",m:"u"},
+  {t:"Launches AI-Powered Storefront Builder for Merchants",sym:"SHOP",src:"TechCrunch",ago:"4h",m:"u"},
+  {t:"Analyst Downgrades on Weakening Residential Solar Demand",sym:"ENPH",src:"MarketWatch",ago:"5h",m:"d"},
+];
+
+function pn(s){
+  if(s===undefined||s===null)return null;
+  const str=String(s).trim();
+  if(!str||str==='#N/A'||str==='N/A'||str==='false'||str==='-')return null;
+  const parenNeg=str.startsWith('(')&&str.endsWith(')');
+  const cleaned=str.replace(/[$,%()]/g,'').replace(/,/g,'').trim();
+  const n=parseFloat(cleaned);
+  return isNaN(n)?null:(parenNeg?-Math.abs(n):n);
+}
+
+function csvSplit(line){
+  const r=[];let c='',q=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='"')q=!q;
+    else if(ch===','&&!q){r.push(c.trim().replace(/^"|"$/g,''));c='';}
+    else c+=ch;
+  }
+  r.push(c.trim().replace(/^"|"$/g,''));
+  return r;
+}
+
+function parseData(text){
+  const firstLine=text.split('\n')[0]||'';
+  const isCSV=firstLine.includes('"')||firstLine.split(',').length>firstLine.split('\t').length;
+  const lines=text.split('\n').filter(l=>l.trim());
+  const positions=[],recap={},benchmarks=[];
+  let rawMode=false;
+
+  for(let i=0;i<Math.min(lines.length,5);i++){
+    const r=isCSV?csvSplit(lines[i]):lines[i].split('\t').map(c=>c.trim().replace(/^"|"$/g,''));
+    if(r[0]&&r[0].toLowerCase()==='stock')continue;
+    if(r.length>3&&r[3]){
+      rawMode=String(r[3]).indexOf('$')===-1&&!isNaN(parseFloat(r[3]));
+      break;
+    }
+  }
+
+  for(let i=0;i<lines.length;i++){
+    const r=isCSV?csvSplit(lines[i]):lines[i].split('\t').map(c=>c.trim().replace(/^"|"$/g,''));
+    if(!r||r.length<2)continue;
+    if(r[0]&&r[0].toLowerCase()==='stock')continue;
+
+    if(r.length>11){
+      const lbl=String(r[10]||'').trim(),val=String(r[11]||'').trim();
+      if(lbl==='TOTAL $')recap.totalDollar=pn(val);
+      if(lbl==='TOTAL %'){
+        let p=pn(val);
+        if(p!==null&&rawMode&&Math.abs(p)<1)p=p*100;
+        recap.totalPct=p;
+      }
+      if(lbl==='TOTAL VAL=')recap.totalVal=pn(val);
+      if(lbl==='$50K+')recap.over50k=pn(val);
+      if(lbl==='$100K+')recap.over100k=pn(val);
+    }
+
+    if(r.length>14){
+      const bn=String(r[10]||'').trim();
+      if(['NASDAQ','DJII','S&P 500','Russell 2k'].includes(bn)){
+        let pct=pn(r[14]);
+        if(pct!==null&&rawMode&&Math.abs(pct)<1)pct=pct*100;
+        let vs=r.length>15?pn(r[15]):null;
+        if(vs!==null&&rawMode&&Math.abs(vs)<1)vs=vs*100;
+        benchmarks.push({name:bn==='DJII'?'DJIA':bn,today:pn(r[11]),yest:pn(r[12]),ch:pn(r[13]),pct,vs});
+      }
+    }
+
+    const sym=String(r[0]||'').trim();
+    if(!sym)continue;
+    const qty=pn(r[1]);
+    if(qty===null||qty===0)continue;
+
+    const price=pn(r[3]);
+    const value=pn(r[4]);
+    const dollarGL=pn(r[6])||0;
+    let pctGL=pn(r[7]);
+    if(pctGL!==null&&rawMode&&Math.abs(pctGL)<1)pctGL=pctGL*100;
+    const perShareGL=pn(r[8]);
+
+    positions.push({symbol:sym,qty,price,value,dollarGL,pctGL,perShareGL,hasData:price!==null});
+  }
+  return{positions,recap,benchmarks};
+}
+
+// Format helpers
+const gc=v=>v>0?'#10b981':v<0?'#ef4444':'#94a3b8';
+const gbg=v=>v>0?'rgba(16,185,129,0.08)':v<0?'rgba(239,68,68,0.08)':'transparent';
+const fmt=n=>{if(n===null||isNaN(n))return'—';const a=Math.abs(n),s=n<0?'-':'';if(a>=1e6)return s+'$'+(a/1e6).toFixed(2)+'M';if(a>=1e3)return s+'$'+(a/1e3).toFixed(1)+'K';return s+'$'+a.toFixed(2);};
+const fmtD=n=>{if(n===null||isNaN(n))return'—';return(n<0?'-$':'$')+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});};
+const fmtP=n=>{if(n===null||isNaN(n))return'—';return(n>=0?'+':'')+n.toFixed(2)+'%';};
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function makeNewsUrl(headline, symbol){
+  const q = symbol ? `${symbol} ${headline}` : headline;
+  return `https://news.google.com/search?q=${encodeURIComponent(q)}&hl=en-US&gl=US&ceid=US:en`;
+}
+
+// Fetch
+
+// ─── LOCAL SETTINGS / MULTI-USER ───────────────────────────────────────────
+function showSetup(){
+  document.getElementById('loading').style.display='none';
+  document.getElementById('app').style.display='none';
+  document.getElementById('setup').style.display='block';
+  const inp=document.getElementById('proxyInput');
+  if(inp) inp.value = PROXY_URL || '';
+}
+
+function hideSetup(){
+  document.getElementById('setup').style.display='none';
+  document.getElementById('loading').style.display='none';
+  document.getElementById('app').style.display='block';
+}
+
+function saveProxyFromSetup(){
+  const v=(document.getElementById('proxyInput').value||'').trim();
+  if(!v) return alert('Paste your Apps Script proxy URL first.');
+  PROXY_URL=v;
+  localStorage.setItem(LS_PROXY_KEY, PROXY_URL);
+  // Default refresh if unset
+  if(!localStorage.getItem(LS_REFRESH_KEY)) localStorage.setItem(LS_REFRESH_KEY, String(REFRESH_SEC));
+  hideSetup();
+  countdown=REFRESH_SEC;
+  fetchData();
+  startTimer();
+}
+
+function prefillDavid(){
+  // Optional convenience: paste your own URL instead (recommended).
+  // Leaving this blank keeps the page “clean” for sharing.
+  const demo = "";
+  const inp=document.getElementById('proxyInput');
+  if(!demo) return alert('No demo URL is embedded. Paste your own proxy URL.');
+  inp.value=demo;
+}
+
+function openSettings(){
+  document.getElementById('testResult').style.display='none';
+  document.getElementById('settingsProxy').value = PROXY_URL || '';
+  document.getElementById('settingsRefresh').value = String(REFRESH_SEC);
+  document.getElementById('settingsModal').style.display='flex';
+}
+
+function closeSettings(){
+  document.getElementById('settingsModal').style.display='none';
+}
+
+function saveSettings(){
+  const proxy=(document.getElementById('settingsProxy').value||'').trim();
+  const refresh=parseInt(document.getElementById('settingsRefresh').value,10);
+  if(!proxy) return alert('Proxy URL is required.');
+  PROXY_URL=proxy;
+  REFRESH_SEC=Number.isFinite(refresh)?refresh:DEFAULT_REFRESH_SEC;
+  countdown=REFRESH_SEC;
+  localStorage.setItem(LS_PROXY_KEY, PROXY_URL);
+  localStorage.setItem(LS_REFRESH_KEY, String(REFRESH_SEC));
+  closeSettings();
+  fetchData();
+  startTimer(); // restart timer with new interval
+}
+
+async function testConnection(){
+  const box=document.getElementById('testResult');
+  box.style.display='block';
+  box.textContent='Testing…';
+  const proxy=(document.getElementById('settingsProxy').value||'').trim() || PROXY_URL;
+  if(!proxy){ box.textContent='Missing proxy URL.'; return; }
+  const t0=performance.now();
+  try{
+    const res=await fetch(proxy, {cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const text=await res.text();
+    const t1=performance.now();
+    const parsed=parseData(text);
+    const ms=Math.round(t1-t0);
+    box.innerHTML = '<b style="color:#10b981">OK</b> · '+ms+'ms · '
+      +parsed.positions.length+' positions · '+parsed.benchmarks.length+' benchmarks';
+  }catch(e){
+    box.innerHTML = '<b style="color:#ef4444">Failed</b> · '+esc(e.message||String(e));
+  }
+}
+
+function resetAll(){
+  if(!confirm('Reset settings on this device? (This does not affect your Google Sheet.)')) return;
+  localStorage.removeItem(LS_PROXY_KEY);
+  localStorage.removeItem(LS_REFRESH_KEY);
+  PROXY_URL='';
+  REFRESH_SEC=DEFAULT_REFRESH_SEC;
+  countdown=REFRESH_SEC;
+  closeSettings();
+  DATA=null;
+  showSetup();
+}
+
+async function fetchData(){
+  if(!PROXY_URL){ showSetup(); return; }
+
+  const btn=document.getElementById('refreshBtn');
+  btn.innerHTML='<span class="spinner"></span>Fetching...';btn.classList.add('loading');
+  try{
+    const res=await fetch(PROXY_URL);
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const text=await res.text();
+    if(!text||text.length<50)throw new Error('Empty response');
+    DATA=parseData(text);
+    document.getElementById('loading').style.display='none';
+    document.getElementById('app').style.display='block';
+    document.getElementById('statusDot').style.background='#10b981';
+    render();
+    countdown=REFRESH_SEC;
+  }catch(e){
+    console.error('Fetch error:',e);
+    document.getElementById('statusDot').style.background='#ef4444';
+    if(!DATA){
+      document.getElementById('loadMsg').textContent='Error: '+e.message;
+      document.getElementById('loadSub').innerHTML='Retrying... <button class="rfb" onclick="fetchData()" style="margin-left:8px">Retry Now</button>';
+      setTimeout(fetchData,5000);
+    } else {
+      document.getElementById('statusStr').textContent='Refresh failed · Retry in '+countdown+'s';
+    }
+  }finally{btn.textContent='↻ Refresh';btn.classList.remove('loading');}
+}
+
+function startTimer(){
+  if(timerInterval)clearInterval(timerInterval);
+  timerInterval=setInterval(()=>{
+    countdown--;
+    const st=document.getElementById('statusStr');
+    if(st&&DATA)st.textContent='LIVE · Next refresh: '+countdown+'s';
+    if(countdown<=0)fetchData();
+  },1000);
+}
+
+function switchTab(t){
+  currentTab=t;
+  document.querySelectorAll('#tabs .tb').forEach(b=>b.classList.toggle('a',b.textContent.toLowerCase()===t));
+  ['overview','holdings'].forEach(id=>{document.getElementById('tab-'+id).style.display=id===t?'':'none';});
+  if(t==='holdings')renderHoldings();
+}
+
+// Render
+function render(){
+  if(!DATA)return;
+  const{positions,recap,benchmarks}=DATA;
+  const longs=positions.filter(p=>p.qty>0),shorts=positions.filter(p=>p.qty<0);
+  const ll=longs.filter(p=>p.hasData),sl=shorts.filter(p=>p.hasData);
+  const totVal=recap.totalVal||ll.reduce((s,p)=>s+(p.value||0),0);
+  const totShort=sl.reduce((s,p)=>s+(p.value||0),0);
+  const totGL=recap.totalDollar||positions.reduce((s,p)=>s+(p.dollarGL||0),0);
+  const totPct=recap.totalPct||(totVal>0?(totGL/totVal*100):0);
+
+  const now=new Date();
+  document.getElementById('dateStr').textContent=now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('statusStr').textContent='LIVE · Updated '+now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'})+' · Next: '+countdown+'s';
+
+  const cards=[
+    {l:'PORTFOLIO VALUE',v:fmtD(totVal),sub:longs.length+'L / '+shorts.length+'S positions',c:''},
+    {l:"TODAY'S P&L",v:fmtD(totGL),sub:fmtP(totPct),c:gc(totGL)},
+    {l:'$50K+ POSITIONS',v:String(recap.over50k||ll.filter(p=>(p.value||0)>=50000).length),sub:'$100K+: '+(recap.over100k||ll.filter(p=>(p.value||0)>=100000).length),c:''},
+    {l:'LIVE QUOTES',v:(ll.length+sl.length)+'/'+positions.length,sub:(positions.length-ll.length-sl.length)+' unavailable',c:''},
+    {l:'TOP 10 CONC.',v:totVal>0?([...ll].sort((a,b)=>(b.value||0)-(a.value||0)).slice(0,10).reduce((s,p)=>s+(p.value||0),0)/totVal*100).toFixed(0)+'%':'—',sub:'of long portfolio',c:''},
+  ];
+  document.getElementById('summary').innerHTML=cards.map(c=>`<div class="card"><div class="lbl">${c.l}</div><div class="big" style="color:${c.c||'#f1f5f9'}">${c.v}</div><div class="sub" style="color:${c.c||'#94a3b8'}">${c.sub}</div></div>`).join('');
+
+  const bmEl=document.getElementById('benchmarks');
+  if(benchmarks.length>0){
+    bmEl.style.cssText=`display:grid;grid-template-columns:repeat(${benchmarks.length},1fr);gap:10px;margin-bottom:16px`;
+    bmEl.innerHTML=benchmarks.map(b=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px"><div><div style="font-size:9px;color:#cbd5e1;letter-spacing:.8px;margin-bottom:3px">${esc(b.name)}</div><div class="dm" style="font-size:17px;font-weight:600;color:#f1f5f9">${b.today?b.today.toLocaleString():'—'}</div></div><div style="text-align:right"><div style="font-size:12px;font-weight:600;color:${gc(b.ch)}">${b.ch!==null?(b.ch>=0?'+':'')+Math.round(b.ch):'—'}</div>${b.pct!==null?`<div class="pill" style="color:${gc(b.pct)};background:${gbg(b.pct)}">${fmtP(b.pct)}</div>`:''}</div></div>`).join('');
+  } else bmEl.style.display='none';
+
+  const vs=benchmarks.filter(b=>b.pct!==null);
+  const vsEl=document.getElementById('vsBar');
+  if(vs.length>0){
+    vsEl.style.display='flex';
+    vsEl.innerHTML=`<span style="color:#cbd5e1;font-weight:600">YOU vs BENCHMARKS:</span>`+vs.map(b=>{
+      const d=b.vs!==null?b.vs:(totPct-b.pct);
+      return`<span style="display:inline-flex;align-items:center;gap:5px"><span style="color:#cbd5e1">${esc(b.name)}:</span><span style="color:${gc(d)};font-weight:600">${fmtP(d)}</span></span>`;
+    }).join('');
+  } else vsEl.style.display='none';
+
+  const topG=[...ll].sort((a,b)=>(b.dollarGL||0)-(a.dollarGL||0)).slice(0,5);
+  const topL=[...ll].sort((a,b)=>(a.dollarGL||0)-(b.dollarGL||0)).slice(0,5);
+  const top10=[...ll].sort((a,b)=>(b.value||0)-(a.value||0)).slice(0,10);
+  const top10S=[...sl].sort((a,b)=>(a.value||0)-(b.value||0)).slice(0,10);
+
+  const mkList=(items,color)=>items.map((p,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;${i<4?'border-bottom:1px solid #1a1f2e':''}"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:9px;color:#94a3b8;width:14px">${i+1}</span><span style="font-weight:600;font-size:12px;color:#f1f5f9">${esc(p.symbol)}</span><span style="font-size:9px;color:#cbd5e1">${Math.abs(p.qty).toLocaleString()}sh</span></div><div style="text-align:right"><span style="font-size:12px;font-weight:600;color:${color}">${fmt(p.dollarGL)}</span><span style="font-size:9px;color:${color};margin-left:6px">${p.pctGL!==null?fmtP(p.pctGL):''}</span></div></div>`).join('');
+
+  const mkTop=top10.map((p,i)=>{const pct=totVal>0?((p.value||0)/totVal*100):0;return`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;${i<9?'border-bottom:1px solid #1a1f2e':''}"><span style="font-size:9px;color:#94a3b8;width:14px">${i+1}</span><span style="font-weight:600;font-size:11px;color:#f1f5f9;width:50px">${esc(p.symbol)}</span><div style="flex:1;height:5px;background:#1a1f2e;border-radius:3px;overflow:hidden"><div style="height:100%;border-radius:3px;width:${Math.min(pct*4,100)}%;background:linear-gradient(90deg,#6366f1,#06b6d4)"></div></div><span style="font-size:10px;color:#cbd5e1;width:65px;text-align:right">${fmt(p.value)}</span><span style="font-size:9px;color:#cbd5e1;font-weight:500;width:38px;text-align:right">${pct.toFixed(1)}%</span></div>`;}).join('');
+
+  const mkS=top10S.length===0?'<div style="color:#64748b;font-size:11px">No live short data</div>':top10S.map((p,i)=>{
+    const pctPort=totVal>0?((Math.abs(p.value)||0)/totVal*100):0;
+    return`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;${i<9?'border-bottom:1px solid #1a1f2e':''}">
+      <span style="font-size:9px;color:#94a3b8;width:14px">${i+1}</span>
+      <span style="font-weight:600;font-size:11px;color:#f1f5f9;width:50px">${esc(p.symbol)}</span>
+      <div style="flex:1;height:5px;background:#1a1f2e;border-radius:3px;overflow:hidden">
+        <div style="height:100%;border-radius:3px;width:${Math.min(pctPort*4,100)}%;background:linear-gradient(90deg,#ef4444,#f59e0b)"></div>
+      </div>
+      <span style="font-size:10px;color:#cbd5e1;width:65px;text-align:right">${fmt(Math.abs(p.value))}</span>
+      <span style="font-size:9px;color:#cbd5e1;font-weight:500;width:42px;text-align:right">${pctPort.toFixed(1)}%</span>
+    </div>`;
+  }).join('');
+
+  const mkMN=MKT_NEWS.map((n,i)=>{const url=n.url||makeNewsUrl(n.t);return`<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;${i<MKT_NEWS.length-1?'border-bottom:1px solid #1a1f2e':''}"><div style="width:5px;height:5px;border-radius:50%;margin-top:5px;flex-shrink:0;background:${n.m==='u'?'#10b981':n.m==='d'?'#ef4444':'#64748b'}"></div><div><div style="font-size:11px;line-height:1.4"><a class="news" href="${url}" target="_blank" rel="noopener">${esc(n.t)}</a></div><div style="font-size:9px;color:#94a3b8;margin-top:2px">${esc(n.src)} · ${n.ago}</div></div></div>`;}).join('');
+
+  const mkPN=PORT_NEWS.map((n,i)=>{const url=n.url||makeNewsUrl(n.t,n.sym);return`<div style="display:flex;align-items:flex-start;gap:10px;padding:7px 0;${i<PORT_NEWS.length-1?'border-bottom:1px solid #1a1f2e':''}"><div style="width:5px;height:5px;border-radius:50%;margin-top:5px;flex-shrink:0;background:${n.m==='u'?'#10b981':n.m==='d'?'#ef4444':'#64748b'}"></div><div style="flex:1"><span class="tag">${esc(n.sym)}</span><div style="font-size:11px;line-height:1.4;margin-top:3px"><a class="news" href="${url}" target="_blank" rel="noopener">${esc(n.t)}</a></div><div style="font-size:9px;color:#94a3b8;margin-top:2px">${esc(n.src)} · ${n.ago}</div></div></div>`;}).join('');
+
+  document.getElementById('tab-overview').innerHTML=`
+    <div class="card"><div class="sect" style="color:#10b981">▲ TOP GAINERS TODAY</div>${mkList(topG,'#10b981')}</div>
+    <div class="card"><div class="sect" style="color:#ef4444">▼ TOP LOSERS TODAY</div>${mkList(topL,'#ef4444')}</div>
+    <div class="card"><div class="sect" style="color:#6366f1">TOP 10 HOLDINGS BY VALUE</div>${mkTop}</div>
+    <div class="card"><div class="sect" style="color:#f59e0b">MARKET NEWS</div>${mkMN}</div>
+    <div class="card"><div class="sect" style="color:#f87171">TOP 10 SHORT POSITIONS</div>${mkS}<div style="margin-top:8px;padding:6px 10px;background:#0d1119;border-radius:4px;display:flex;justify-content:space-between;font-size:10px"><span style="color:#94a3b8">Total Short Exposure</span><span style="color:#f87171;font-weight:600">${fmtD(Math.abs(totShort))}</span><span style="color:#94a3b8;margin-left:10px">${totVal>0?((Math.abs(totShort)/totVal)*100).toFixed(1):'—'}%</span></div></div>
+    <div class="card"><div class="sect" style="color:#06b6d4">PORTFOLIO NEWS</div>${mkPN}</div>`;
+
+  if(currentTab==='holdings')renderHoldings();
+}
+
+function toggleSort(key){
+  if(sortKey===key){sortDir = (sortDir==='desc')?'asc':'desc';}
+  else{sortKey=key;sortDir=(key==='symbol')?'asc':'desc';}
+  renderHoldings();
+}
+
+function sortValue(p,key){
+  const v=x=>(x===null||x===undefined||Number.isNaN(x))?null:x;
+  if(key==='symbol')return p.symbol||'';
+  if(key==='qty')return v(p.qty);
+  if(key==='price')return v(p.price);
+  if(key==='chg$')return v(p.perShareGL);
+  if(key==='chg%')return v(p.pctGL);
+  if(key==='value')return v(Math.abs(p.value||0));
+  if(key==='daygl')return v(p.dollarGL);
+  if(key==='absValue')return v(Math.abs(p.value||0));
+  return v(p.value);
+}
+
+function renderHoldings(){
+  if(!DATA)return;
+  const all=[...DATA.positions];
+  const key=sortKey||'absValue';
+  const dir=sortDir||'desc';
+
+  all.sort((a,b)=>{
+    const va=sortValue(a,key),vb=sortValue(b,key);
+    if(typeof va==='string'||typeof vb==='string'){
+      const sa=String((va==null?'':va)).toUpperCase(),sb=String((vb==null?'':vb)).toUpperCase();
+      if(sa<sb)return dir==='asc'?-1:1;
+      if(sa>sb)return dir==='asc'?1:-1;
+      return 0;
+    }
+    if(va===null&&vb===null)return 0;
+    if(va===null)return 1;
+    if(vb===null)return -1;
+    if(va<vb)return dir==='asc'?-1:1;
+    if(va>vb)return dir==='asc'?1:-1;
+    return 0;
+  });
+
+  const sortGlyph=k=>(sortKey===k)?(sortDir==='asc'?'▲':'▼'):'';
+
+  const rows=all.map(p=>`<tr class="row-h" style="opacity:${p.hasData?1:0.35}"><td style="font-weight:600;color:#f1f5f9">${esc(p.symbol)}${!p.hasData?'<span style="font-size:8px;color:#64748b;margin-left:4px">N/A</span>':''}</td><td style="text-align:right;color:${p.qty<0?'#f87171':'#f1f5f9'}">${p.qty.toLocaleString()}</td><td style="text-align:right;color:#e2e8f0">${p.price!==null?'$'+p.price.toFixed(2):'—'}</td><td style="text-align:right;color:${gc(p.perShareGL)}">${p.perShareGL!==null?(p.perShareGL>=0?'+':'')+p.perShareGL.toFixed(2):'—'}</td><td style="text-align:right"><span class="pill" style="color:${gc(p.pctGL)};background:${gbg(p.pctGL)}">${p.pctGL!==null?fmtP(p.pctGL):'—'}</span></td><td style="text-align:right;color:#e2e8f0;font-weight:500">${p.value!==null?fmt(Math.abs(p.value)):'—'}</td><td style="text-align:right;color:${gc(p.dollarGL)};font-weight:600">${fmt(p.dollarGL)}</td></tr>`).join('');
+
+  document.getElementById('tab-holdings').innerHTML=`<div style="margin-bottom:10px;font-size:10px;color:#94a3b8">All ${all.length} positions · Click headers to sort</div><div class="card" style="overflow:hidden;padding:0"><div style="overflow:auto;max-height:600px"><table><thead><tr style="position:sticky;top:0;background:#0f1420;z-index:2"><th style="text-align:left" onclick="toggleSort('symbol')">SYMBOL <span class="sort">${sortGlyph('symbol')}</span></th><th style="text-align:right" onclick="toggleSort('qty')">QTY <span class="sort">${sortGlyph('qty')}</span></th><th style="text-align:right" onclick="toggleSort('price')">PRICE <span class="sort">${sortGlyph('price')}</span></th><th style="text-align:right" onclick="toggleSort('chg$')">CHG $ <span class="sort">${sortGlyph('chg$')}</span></th><th style="text-align:right" onclick="toggleSort('chg%')">CHG % <span class="sort">${sortGlyph('chg%')}</span></th><th style="text-align:right" onclick="toggleSort('value')">VALUE <span class="sort">${sortGlyph('value')}</span></th><th style="text-align:right" onclick="toggleSort('daygl')">DAY G/L <span class="sort">${sortGlyph('daygl')}</span></th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
+
+// Boot
+if(!PROXY_URL){
+  showSetup();
+} else {
+  fetchData();
+  startTimer();
+}
+
+// ─── MOBILE: swipe between tabs (Overview ↔ Holdings) ───────────────────────
+(function enableSwipeTabs(){
+  const el = document.getElementById('mainWrap');
+  if(!el) return;
+
+  let startX=0, startY=0, tracking=false;
+
+  const onStart = (e)=>{
+    const t = e.touches ? e.touches[0] : e;
+    startX = t.clientX; startY = t.clientY;
+    tracking = true;
+  };
+  const onMove = (e)=>{
+    if(!tracking) return;
+    const t = e.touches ? e.touches[0] : e;
+    const dx = t.clientX - startX;
+    const dy = t.clientY - startY;
+    // if user is scrolling vertically, ignore
+    if(Math.abs(dy) > Math.abs(dx)) tracking = false;
+  };
+  const onEnd = (e)=>{
+    if(!tracking) return;
+    const t = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0] : e;
+    const dx = t.clientX - startX;
+    const dy = t.clientY - startY;
+    tracking = false;
+    if(Math.abs(dx) < 60 || Math.abs(dy) > 60) return;
+
+    if(dx < 0 && currentTab === 'overview') switchTab('holdings'); // swipe left
+    if(dx > 0 && currentTab === 'holdings') switchTab('overview'); // swipe right
+  };
+
+  el.addEventListener('touchstart', onStart, {passive:true});
+  el.addEventListener('touchmove', onMove, {passive:true});
+  el.addEventListener('touchend', onEnd, {passive:true});
+})();
+
+
+// ─── Hint toast (mobile only, one-time) ─────────────────────────────────────
+(function mobileHint(){
+  try{
+    if(localStorage.getItem('gt_hide_toast') === '1') return;
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if(!isMobile) return;
+    const toast = document.getElementById('toastHint');
+    if(!toast) return;
+    // show after first successful render (or 2s)
+    setTimeout(()=>{ 
+      // only show if app loaded
+      if(typeof DATA !== 'undefined' && DATA) toast.style.display='block';
+    }, 2200);
+  }catch(e){}
+})();
+
+</script>
+</body>
+</html>
