@@ -1235,7 +1235,7 @@ function runParse() {
   btn.classList.add('loading');
   btn.innerHTML = '<span class="spinner"></span>Parsing...';
   
-  var url = PROXY_URL || SCRIPT_URL;
+ var url = "https://script.google.com/macros/s/AKfycbzqdVUUcqOrDcnKlaIh6_JqYlEHOw04N-plV4aImPDYaQ4eTqSr73-yKzSg8NjovTak/exec";
   // Strip any existing query params and add action=parse
   var base = url.split('?')[0];
   var cbName = 'parseCallback_' + Date.now();
