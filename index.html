@@ -141,6 +141,7 @@ body{padding-top:var(--safe-top);padding-bottom:var(--safe-bottom);}
     </div>
     <div style="display:flex;align-items:center;gap:10px">
       <button class="rfb" id="refreshBtn" onclick="fetchData()">↻ Refresh</button>
+      <button class="rfb" id="parseBtn" onclick="runParse()">⟳ Parse</button>
       <button class="rfb" id="demoExitBtn" onclick="exitDemo()" style="display:none;border-color:#f59e0b;color:#fff;background:rgba(245,158,11,.10)" title="Exit demo">Exit Demo</button>
       <button class="rfb" onclick="openSettings()" title="Settings">⚙</button>
       <div style="text-align:right">
@@ -1229,7 +1230,58 @@ function exitDemo(){
   // Go back to setup (does not clear your saved proxy)
   showSetup();
 }
-
+function runParse() {
+  var btn = document.getElementById('parseBtn');
+  btn.classList.add('loading');
+  btn.innerHTML = '<span class="spinner"></span>Parsing...';
+  
+  var url = PROXY_URL || SCRIPT_URL;
+  // Strip any existing query params and add action=parse
+  var base = url.split('?')[0];
+  var cbName = 'parseCallback_' + Date.now();
+  
+  window[cbName] = function(result) {
+    btn.classList.remove('loading');
+    if (result.status === 'success') {
+      btn.innerHTML = '✓ Parsed ' + result.newPositions + ' positions';
+      btn.style.borderColor = '#10b981';
+      btn.style.color = '#10b981';
+      setTimeout(function() {
+        btn.innerHTML = '⟳ Parse';
+        btn.style.borderColor = '';
+        btn.style.color = '';
+        fetchData(); // auto-refresh dashboard after parse
+      }, 3000);
+    } else {
+      btn.innerHTML = '✗ ' + (result.message || 'Error');
+      btn.style.borderColor = '#ef4444';
+      btn.style.color = '#ef4444';
+      setTimeout(function() {
+        btn.innerHTML = '⟳ Parse';
+        btn.style.borderColor = '';
+        btn.style.color = '';
+      }, 4000);
+    }
+    delete window[cbName];
+    document.body.removeChild(script);
+  };
+  
+  var script = document.createElement('script');
+  script.src = base + '?action=parse&callback=' + cbName;
+  script.onerror = function() {
+    btn.classList.remove('loading');
+    btn.innerHTML = '✗ Network error';
+    btn.style.borderColor = '#ef4444';
+    btn.style.color = '#ef4444';
+    setTimeout(function() {
+      btn.innerHTML = '⟳ Parse';
+      btn.style.borderColor = '';
+      btn.style.color = '';
+    }, 4000);
+    delete window[cbName];
+  };
+  document.body.appendChild(script);
+}
 // ─────────────────────────────────────────────────────────────────────────────
 // Fetch / timer
 async function fetchData(){
