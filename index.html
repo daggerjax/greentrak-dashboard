@@ -52,6 +52,29 @@ a.news:hover{text-decoration:underline}
   #tabs{position:sticky;top:0;z-index:5;background:rgba(10,14,23,0.78);backdrop-filter: blur(10px);padding:10px 0}
   #tabs .tb{flex:1;text-align:center}
   #tabs{display:flex}
+  #benchmarks{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  #vsBar{flex-direction:column;gap:8px!important;align-items:flex-start!important}
+  #mainWrap{padding:12px 10px}
+  .card{padding:10px}
+  #tab-holdings .card{padding:0}
+  table th,table td{padding:6px 6px;font-size:9px}
+  #tab-overview .card div[style*="width:58px"],
+  #tab-overview .card div[style*="width:44px"],
+  #tab-overview .card div[style*="width:68px"],
+  #tab-overview .card div[style*="width:54px"]{width:auto!important;font-size:9px!important}
+}
+@media(max-width:480px){
+  .grid5{grid-template-columns:1fr 1fr}
+  #benchmarks{grid-template-columns:1fr 1fr!important}
+  #benchmarks .card{padding:8px 10px!important}
+  #benchmarks .dm{font-size:14px!important}
+  #benchmarks .pill{font-size:9px!important}
+  body{overflow-x:hidden}
+  #app{overflow-x:hidden}
+  #mainWrap{padding:10px 8px;overflow-x:hidden}
+  table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table th,table td{padding:5px 4px;font-size:8px;white-space:nowrap}
+}
 }
 :root{--safe-top: env(safe-area-inset-top);--safe-bottom: env(safe-area-inset-bottom);}
 body{padding-top:var(--safe-top);padding-bottom:var(--safe-bottom);}
