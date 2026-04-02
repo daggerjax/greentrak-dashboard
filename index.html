@@ -1455,18 +1455,18 @@ function render(){
   const top10S=sl.slice().sort((a,b)=>(a.value||0)-(b.value||0)).slice(0,10);
   const totShort = sl.reduce((s,p)=>s+(p.value||0),0); // negative
 
-  const rowGainer=(p,i,color)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;${i<4?'border-bottom:1px solid #1a1f2e':''}">
-    <div style="display:flex;align-items:center;gap:10px;min-width:0">
-      <span style="font-size:9px;color:#94a3b8;width:14px">${i+1}</span>
-      <div style="min-width:0">
-        <div style="display:flex;align-items:baseline;gap:8px;min-width:0">
-          <span style="font-weight:900;font-size:13px;color:#fff">${esc(p.symbol)}</span>
-          <span style="font-size:12px;color:#cbd5e1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.name||'')}</span>
+const rowGainer=(p,i,color)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;${i<4?'border-bottom:1px solid #1a1f2e':''}">
+    <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1">
+      <span style="font-size:9px;color:#94a3b8;width:14px;flex-shrink:0">${i+1}</span>
+      <div style="min-width:0;flex:1">
+        <div style="display:flex;align-items:baseline;gap:6px;min-width:0">
+          <span style="font-weight:900;font-size:13px;color:#fff;flex-shrink:0">${esc(p.symbol)}</span>
+          <span style="font-size:11px;color:#cbd5e1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.name||'')}</span>
         </div>
         <div style="font-size:9px;color:#cbd5e1;margin-top:2px">${Math.abs(p.qty).toLocaleString()} sh</div>
       </div>
     </div>
-    <div style="text-align:right">
+    <div style="text-align:right;flex-shrink:0;padding-left:8px">
       <div style="font-size:12px;font-weight:900;color:${color}">${fmt(p.dollarGL)}</div>
       <div style="font-size:10px;color:${color};font-weight:800">${p.pctGL!==null?fmtP(p.pctGL):''}</div>
     </div>
