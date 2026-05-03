@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GreenTrak Setup Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #060a10;
+  --card: #0f1420;
+  --border: #1e293b;
+  --text: #cbd5e1;
+  --heading: #f1f5f9;
+  --accent: #10b981;
+  --accent-dim: #065f46;
+  --muted: #64748b;
+  --warn: #f59e0b;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  min-height: 100vh;
+}
+.container {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+}
+h1 {
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--heading);
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
+}
+.subtitle {
+  color: var(--muted);
+  font-size: 14px;
+  margin-bottom: 40px;
+}
+.step {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 20px;
+  position: relative;
+}
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-weight: 900;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+.step h2 {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--heading);
+  margin-bottom: 12px;
+}
+.step p {
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+.step p:last-child {
+  margin-bottom: 0;
+}
+.action {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin: 12px 0;
+  font-size: 13px;
+  line-height: 1.8;
+}
+.action b {
+  color: var(--heading);
+}
+.highlight {
+  color: var(--accent);
+  font-weight: 700;
+}
+.warn {
+  color: var(--warn);
+  font-weight: 500;
+}
+.copy-box {
+  background: var(--bg);
+  border: 1px solid var(--accent-dim);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin: 12px 0;
+  font-size: 12px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  color: var(--accent);
+  word-break: break-all;
+  cursor: pointer;
+  position: relative;
+  transition: border-color 0.2s;
+}
+.copy-box:hover {
+  border-color: var(--accent);
+}
+.copy-box::after {
+  content: 'click to copy';
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.copy-box.copied::after {
+  content: 'copied!';
+  color: var(--accent);
+}
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 32px 0;
+}
+.time-est {
+  display: inline-block;
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-bottom: 12px;
+}
+.overview {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin: 24px 0 32px;
+}
+.overview-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
+}
+.overview-item .num {
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--accent);
+  display: block;
+}
+.overview-item .label {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.faq {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 12px;
+}
+.faq summary {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--heading);
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.faq summary::after {
+  content: '+';
+  font-size: 18px;
+  color: var(--muted);
+  transition: transform 0.2s;
+}
+.faq[open] summary::after {
+  content: '−';
+}
+.faq p {
+  font-size: 13px;
+  margin-top: 12px;
+  color: var(--text);
+}
+footer {
+  text-align: center;
+  padding: 40px 20px;
+  font-size: 10px;
+  color: var(--muted);
+}
+@media (max-width: 500px) {
+  .overview { grid-template-columns: 1fr; }
+  .container { padding: 24px 16px 60px; }
+  h1 { font-size: 22px; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <h1>GreenTrak Setup Guide</h1>
+  <p class="subtitle">Track your portfolio in one place. Follow these steps to get started.</p>
+
+  <div class="overview">
+    <div class="overview-item">
+      <span class="num">6</span>
+      <span class="label">Steps total</span>
+    </div>
+    <div class="overview-item">
+      <span class="num">~15</span>
+      <span class="label">Minutes</span>
+    </div>
+    <div class="overview-item">
+      <span class="num">0</span>
+      <span class="label">Coding required</span>
+    </div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div class="step">
+    <div class="step-number">1</div>
+    <h2>Copy the Template Sheet</h2>
+    <div class="time-est">1 minute</div>
+    <p>Click the link below. Google will ask if you want to make a copy. Click <b>"Make a copy."</b></p>
+    <div class="copy-box" onclick="copyText(this, 'https://docs.google.com/spreadsheets/d/1fMWVowm-nIZ3cW7S7JhjA0ao18DtWtuUNfQ0gmxM7Vs/copy')">
+      https://docs.google.com/spreadsheets/d/1fMWVowm-nIZ3cW7S7JhjA0ao18DtWtuUNfQ0gmxM7Vs/copy
+    </div>
+    <p>This gives you your own private Google Sheet with everything pre-configured. Your data stays in your Google account. Nobody else can see it.</p>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step">
+    <div class="step-number">2</div>
+    <h2>Get Your Sheet ID</h2>
+    <div class="time-est">30 seconds</div>
+    <p>Open your new copy. Look at the URL in your browser's address bar. It looks like this:</p>
+    <div class="action">
+      https://docs.google.com/spreadsheets/d/<b>abc123xyz_YOUR_ID_HERE</b>/edit
+    </div>
+    <p>The part between <span class="highlight">/d/</span> and <span class="highlight">/edit</span> is your Sheet ID. Select it and copy it. You'll need it in the next step.</p>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step">
+    <div class="step-number">3</div>
+    <h2>Connect the Script</h2>
+    <div class="time-est">3 minutes</div>
+    <p>This is the longest step, but you only do it once.</p>
+    <div class="action">
+      <b>3a.</b> In your copied sheet, click <b>Extensions</b> in the top menu bar, then click <b>Apps Script</b>. A new tab opens with code in it.<br><br>
+      <b>3b.</b> Near the top of the code, find the line that says:<br>
+      <span class="highlight">SHEET_ID: "YOUR_SHEET_ID_HERE"</span><br><br>
+      <b>3c.</b> Replace <span class="highlight">YOUR_SHEET_ID_HERE</span> with the Sheet ID you copied in Step 2. Keep the quotes around it.<br><br>
+      <b>3d.</b> Press <b>Cmd+S</b> (Mac) or <b>Ctrl+S</b> (PC) to save.
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="step">
+    <div class="step-number">4</div>
+    <h2>Deploy the Script</h2>
+    <div class="time-est">2 minutes</div>
+    <p>Still in the Apps Script tab:</p>
+    <div class="action">
+      <b>4a.</b> Click the blue <b>Deploy</b> button (top right), then <b>New deployment</b>.<br><br>
+      <b>4b.</b> Click the gear icon next to "Select type" and choose <b>Web app</b>.<br><br>
+      <b>4c.</b> Under "Execute as," select <b>Me</b>.<br><br>
+      <b>4d.</b> Under "Who has access," select <b>Anyone</b>.<br><br>
+      <b>4e.</b> Click <b>Deploy</b>.<br><br>
+      <b>4f.</b> Google will ask you to authorize. Click <b>Authorize access</b>, pick your Google account, and click <b>Allow</b>.<br><br>
+      <b>4g.</b> You'll see a URL. <span class="highlight">Copy this URL.</span> This is your personal script URL. Save it somewhere safe.
+    </div>
+    <p class="warn">Note: If you see "Google hasn't verified this app," click "Advanced" then "Go to (project name) (unsafe)." This is normal for personal scripts.</p>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="step">
+    <div class="step-number">5</div>
+    <h2>Open the Dashboard</h2>
+    <div class="time-est">1 minute</div>
+    <p>Go to the dashboard:</p>
+    <div class="copy-box" onclick="copyText(this, 'https://daggerjax.github.io/greentrak-dashboard/')">
+      https://daggerjax.github.io/greentrak-dashboard/
+    </div>
+    <div class="action">
+      <b>5a.</b> You'll see a setup screen. Paste your script URL into the <b>"Data URL"</b> field.<br><br>
+      <b>5b.</b> Leave <b>"Parse URL"</b> blank.<br><br>
+      <b>5c.</b> Click <b>Save &amp; Load</b>.
+    </div>
+    <p>The dashboard will load. It will be empty because you haven't imported any positions yet. That's next.</p>
+  </div>
+
+  <!-- STEP 6 -->
+  <div class="step">
+    <div class="step-number">6</div>
+    <h2>Import Your Positions</h2>
+    <div class="time-est">5 minutes</div>
+    <p>This is what you'll do each month to update your portfolio.</p>
+    <div class="action">
+      <b>6a.</b> Log into each brokerage account and download your positions as a CSV file.<br><br>
+      <b>6b.</b> Go to <b>Google Drive</b> and create a folder called exactly: <span class="highlight">GreenTrak Imports</span><br><br>
+      <b>6c.</b> Upload all your CSV files into that folder.<br><br>
+      <b>6d.</b> Go back to the dashboard and click the <b>Parse</b> button.<br><br>
+      <b>6e.</b> Wait a few seconds. Your positions will appear.
+    </div>
+    <p>That's it! The dashboard will show your combined portfolio with live prices, daily changes, and benchmarks.</p>
+  </div>
+
+  <div class="divider"></div>
+
+  <h2 style="color:var(--heading);margin-bottom:16px;font-size:17px">Common Questions</h2>
+
+  <details class="faq">
+    <summary>Can anyone see my portfolio?</summary>
+    <p>No. Your data lives in your personal Google Sheet. The dashboard runs entirely in your browser. Your script URL is stored only on your device. Nobody else can see your data, not even the person who shared this with you.</p>
+  </details>
+
+  <details class="faq">
+    <summary>How do I update my portfolio each month?</summary>
+    <p>Download fresh CSV files from your brokerage accounts, upload them to your "GreenTrak Imports" folder in Google Drive (you can replace the old ones or leave them, the system only processes the most recent batch), and click Parse on the dashboard.</p>
+  </details>
+
+  <details class="faq">
+    <summary>What if I get a "Google hasn't verified this app" warning?</summary>
+    <p>This is normal. Google shows this for any personal Apps Script. Click "Advanced" then "Go to (project name) (unsafe)." It's your own script running on your own account.</p>
+  </details>
+
+  <details class="faq">
+    <summary>Can I use this on my phone?</summary>
+    <p>Yes. Open the dashboard URL in your phone's browser. It works on any device. Bookmark it for quick access.</p>
+  </details>
+
+  <details class="faq">
+    <summary>What if I switch browsers or clear my data?</summary>
+    <p>You'll see the setup screen again. Just paste your script URL back in. Your portfolio data is safe in your Google Sheet, nothing is lost.</p>
+  </details>
+
+  <details class="faq">
+    <summary>The Parse button says "network error." What do I do?</summary>
+    <p>Make sure your "GreenTrak Imports" folder exists in Google Drive and has CSV files in it. If it still fails, open the dashboard settings (gear icon), verify your URL is correct, and try again.</p>
+  </details>
+
+</div>
+
+<footer>
+  GreenTrak Portfolio Intelligence
+</footer>
+
+<script>
+function copyText(el, text) {
+  navigator.clipboard.writeText(text).then(function() {
+    el.classList.add('copied');
+    setTimeout(function() { el.classList.remove('copied'); }, 2000);
+  });
+}
+</script>
+
+</body>
+</html>
