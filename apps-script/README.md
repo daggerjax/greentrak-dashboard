@@ -1,10 +1,25 @@
 # GreenTrak Apps Script
 
-`Code.gs` is the backend that powers the dashboard: it serves the Google Sheet
-as CSV, fetches news, and consolidates brokerage CSV exports into the Sheet.
+`Code.gs` is the **single authoritative** backend that powers the dashboard: it
+serves the Google Sheet as CSV, fetches news, and consolidates brokerage CSV
+exports into the Sheet (account-aware: offshore column handling, ×2 doubling for
+account 6925, and ticker exclusions).
 
 This folder is the **version-controlled copy**. The live script runs in the
 Google Apps Script editor (Extensions → Apps Script from the bound Sheet).
+
+## History — consolidated from 4 files (2026-06-22)
+
+The project had accumulated 4 `.gs` files with colliding top-level names
+(`doGet`, `CONFIG`, `consolidate`, …). Only one could ever win at runtime.
+They were merged into this one file and the others deleted:
+
+- **Combined (5/4)** — data + news + parse routing; placeholder config; simplified
+  parser → kept as the skeleton.
+- **Consolidator v2 (4/1)** — real config + account-aware parser → its parser
+  brains merged in.
+- **Data proxy (3/1)** — data + news only → superseded, deleted.
+- **(3/22)** — unrelated stopwatch + joke helpers → deleted.
 
 ## Deploying changes
 

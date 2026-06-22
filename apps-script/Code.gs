@@ -1,47 +1,47 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// GreenTrak Combined Script — Data Proxy + CSV Consolidator
+// GreenTrak — SINGLE authoritative Apps Script
+// Data proxy (Sheet → CSV) + News + Account-aware CSV Consolidator + History
 //
-// SETUP:
-//   1. Open your GreenTrak Google Sheet
-//   2. Extensions > Apps Script > paste this entire file
-//   3. Update CONFIG below (Sheet ID and Drive folder)
-//   4. Deploy > New deployment > Web app
-//      Execute as: Me | Who has access: Anyone
-//   5. Paste the URL into the dashboard setup screen
+// This file replaces the old multi-file pile (Combined 5/4, Consolidator v2 4/1,
+// data-proxy 3/1, and the unrelated 3/22 junk). Keep ONLY this file in the
+// Apps Script project — duplicate function names across files collide.
 //
-// CSV IMPORT:
-//   1. Create a folder in Google Drive called "GreenTrak Imports"
-//      (or change DRIVE_FOLDER_NAME below)
-//   2. Upload your brokerage CSV exports to that folder
-//   3. Click Parse on the dashboard
+// DEPLOY: paste into the editor as the only file, then
+//   Deploy → Manage deployments → edit existing Web app → New version → Deploy
+//   (keeps the same /exec URL the dashboard already uses).
+//
+// CONFIG: SHEET_ID and DRIVE_FOLDER_ID are placeholders here so this public repo
+// holds no IDs. Fill in the real values in the deployed editor copy.
 // ═══════════════════════════════════════════════════════════════════════════
 
 
 // ─── CONFIG ──────────────────────────────────────────────────────────────
 var CONFIG = {
-  // Replace with YOUR Google Sheet ID (from the URL between /d/ and /edit)
+  // Real values live in the deployed editor copy (kept out of the public repo).
   SHEET_ID: "YOUR_SHEET_ID_HERE",
 
-  // Sheet tab name where positions live
   SHEET_TAB: "Holdings",
-
-  // History tab for parse logs
   HISTORY_TAB: "History",
 
-  // Google Drive folder for CSV uploads
-  // Option A: Use folder name (easier setup, searches by name)
+  // CSV import folder — set the ID in the deployed copy; name is a fallback.
+  DRIVE_FOLDER_ID: "YOUR_DRIVE_FOLDER_ID_HERE",
   DRIVE_FOLDER_NAME: "GreenTrak Imports",
-  // Option B: Use folder ID (more reliable, set to "" to use name instead)
-  DRIVE_FOLDER_ID: "",
 
-  // Column layout: A = symbol (1), C = qty (3)
+  // Column layout: A = symbol (1), C = qty (3); data starts row 2
   SYMBOL_COL: 1,
   QTY_COL: 3,
-  START_ROW: 2
+  START_ROW: 2,
+
+  // Account-specific handling (from Consolidator v2)
+  DOUBLE_ACCOUNT: "6925",        // quantities in this account count ×2
+  OFFSHORE_ACCOUNTS: ["6925"]    // offshore CSVs put qty in col 10 instead of 8
 };
 
 // Money market / cash fund tickers to skip
 var SKIP_SYMBOLS = /^(FDRXX|FZFXX|SPAXX|VMFXX|SWVXX|SPRXX|FCASH|CORE|FMPXX|FTEXX)$/i;
+
+// Specific tickers to exclude (delisted / bankrupt placeholders)
+var EXCLUDE_SYMBOLS = { "LAZRQ": true, "SICPQ": true };
 
 // Month abbreviations for date parsing
 var MONTHS = {
@@ -68,8 +68,7 @@ function doGet(e) {
 
   // Route: Parse history
   if (action === "history") {
-    var result = getHistory();
-    return respond(result, callback);
+    return respond(getHistory(), callback);
   }
 
   // Route: News
@@ -132,8 +131,7 @@ function handleData(e) {
   // Support JSONP for GitHub Pages
   var cb = (e && e.parameter && e.parameter.callback) ? e.parameter.callback : null;
   if (cb) {
-    var payload = JSON.stringify(csv);
-    return ContentService.createTextOutput(cb + "(" + payload + ")")
+    return ContentService.createTextOutput(cb + "(" + JSON.stringify(csv) + ")")
       .setMimeType(ContentService.MimeType.JAVASCRIPT);
   }
 
@@ -224,12 +222,12 @@ function parseGoogleNewsRss_(xmlText, symbolsCsv) {
 
 
 // ═══════════════════════════════════════════════════════════════════════════
-// CSV CONSOLIDATOR
+// CSV CONSOLIDATOR (account-aware: offshore column + ×2 doubling)
 // ═══════════════════════════════════════════════════════════════════════════
 
 function consolidate() {
   var folder = findFolder();
-  if (!folder) return { status: "error", message: "Import folder not found. Create a Google Drive folder called '" + CONFIG.DRIVE_FOLDER_NAME + "' and upload your brokerage CSVs." };
+  if (!folder) return { status: "error", message: "Import folder not found. Create a Google Drive folder called '" + CONFIG.DRIVE_FOLDER_NAME + "' (or set DRIVE_FOLDER_ID) and upload your brokerage CSVs." };
 
   // Capture previous state for history
   var oldPositions = getExistingPositions();
@@ -270,12 +268,14 @@ function consolidate() {
     if (latestDate && entry.date) {
       if (entry.date.getTime() !== latestDate.getTime()) {
         skippedCount++;
+        Logger.log("SKIPPED (old): " + entry.filename);
         continue;
       }
     }
-    // Skip files with no parseable date
+    // Skip files with no parseable date (not a positions file)
     if (latestDate && !entry.date) {
       skippedCount++;
+      Logger.log("SKIPPED (no date): " + entry.filename);
       continue;
     }
 
@@ -285,9 +285,17 @@ function consolidate() {
     var content = entry.file.getBlob().getDataAsString("latin1");
     var rows = Utilities.parseCsv(content);
 
-    // Standard brokerage CSV: Security ID at column 4, Quantity at column 8
+    // Account number from the data itself (column 0, first data row)
+    var acctNum = "";
+    if (rows.length > 1 && rows[1] && rows[1][0]) {
+      acctNum = rows[1][0].trim();
+    }
+
+    var isOffshore = CONFIG.OFFSHORE_ACCOUNTS.indexOf(acctNum) !== -1;
+    var multiplier = (acctNum === CONFIG.DOUBLE_ACCOUNT) ? 2 : 1;
+
     var symColIdx = 4;
-    var qtyColIdx = 8;
+    var qtyColIdx = isOffshore ? 10 : 8;
 
     for (var i = 1; i < rows.length; i++) {
       var row = rows[i];
@@ -301,11 +309,12 @@ function consolidate() {
       // Valid tickers: 1-6 uppercase letters, optionally with dot (BRK.B)
       if (!/^[A-Z]{1,6}[.]?[A-Z]?$/.test(rawSym)) continue;
       if (SKIP_SYMBOLS.test(rawSym)) continue;
+      if (EXCLUDE_SYMBOLS[rawSym]) continue;
 
       var qty = parseFloat(rawQty.replace(/,/g, ""));
       if (isNaN(qty) || qty === 0) continue;
 
-      allPositions[rawSym] = (allPositions[rawSym] || 0) + qty;
+      allPositions[rawSym] = (allPositions[rawSym] || 0) + (qty * multiplier);
     }
   }
 
@@ -340,6 +349,10 @@ function consolidate() {
 
   logHistory(latestDate, oldCount, newCount, added, removed, changed, fileCount);
 
+  Logger.log("DONE — " + newCount + " positions from " + fileCount +
+    " files dated " + dateStr + " (" + skippedCount + " skipped). " +
+    "+" + added + " / -" + removed + " / ~" + changed);
+
   return {
     status: "success",
     csvDate: dateStr,
@@ -355,7 +368,7 @@ function consolidate() {
 
 
 // ═══════════════════════════════════════════════════════════════════════════
-// DATE PARSER — extracts date from filename like "28-Feb-2026"
+// DATE PARSER — extracts date from filename like "28-Feb-2026.csv"
 // ═══════════════════════════════════════════════════════════════════════════
 
 function parseDateFromFilename(filename) {
@@ -537,7 +550,7 @@ function getHistory() {
 
 function findFolder() {
   // Try by ID first
-  if (CONFIG.DRIVE_FOLDER_ID) {
+  if (CONFIG.DRIVE_FOLDER_ID && CONFIG.DRIVE_FOLDER_ID !== "YOUR_DRIVE_FOLDER_ID_HERE") {
     try {
       return DriveApp.getFolderById(CONFIG.DRIVE_FOLDER_ID);
     } catch (e) {
