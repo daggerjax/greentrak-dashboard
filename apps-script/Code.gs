@@ -37,6 +37,11 @@ var CONFIG = {
   OFFSHORE_ACCOUNTS: ["6925"]    // offshore CSVs put qty in col 10 instead of 8
 };
 
+// Access token: if set to a real value (in the deployed copy), every request must
+// include ?key=<this>. Left as the placeholder here so the public repo has no secret;
+// when it equals the placeholder (or is blank) the check is disabled.
+var ACCESS_TOKEN = "YOUR_ACCESS_TOKEN_HERE";
+
 // Money market / cash fund tickers to skip
 var SKIP_SYMBOLS = /^(FDRXX|FZFXX|SPAXX|VMFXX|SWVXX|SPRXX|FCASH|CORE|FMPXX|FTEXX)$/i;
 
@@ -59,6 +64,12 @@ function doGet(e) {
   var action = params.action || "";
   var mode = params.mode || "";
   var callback = params.callback || "";
+
+  // Access-token gate. Enabled only when ACCESS_TOKEN is set to a real value.
+  var requireKey = ACCESS_TOKEN && ACCESS_TOKEN !== "YOUR_ACCESS_TOKEN_HERE";
+  if (requireKey && params.key !== ACCESS_TOKEN) {
+    return respond({ status: "error", message: "Unauthorized" }, callback);
+  }
 
   // Route: CSV parse
   if (action === "parse") {

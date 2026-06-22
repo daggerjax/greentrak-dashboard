@@ -166,6 +166,11 @@ body{padding-top:var(--safe-top);padding-bottom:var(--safe-bottom);}
       <div style="font-size:10px;color:#94a3b8;line-height:1.5">
         If you have a separate parser script, paste its URL here. Otherwise leave blank.
       </div>
+      <label class="lbl" style="margin:0">Access Token <span style="font-weight:400;color:#64748b">(leave blank if no key check)</span></label>
+      <input id="tokenInput" placeholder="Required key for the web app, if enabled" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid #1e293b;background:#0a0e17;color:#f1f5f9;font-family:inherit;font-size:11px;outline:none">
+      <div style="font-size:10px;color:#94a3b8;line-height:1.5">
+        Sent as <code>?key=…</code> on every request. Stored only in this browser.
+      </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:4px">
         <button class="tb a" onclick="saveProxyFromSetup()">Save &amp; Load</button>
         <button class="tb" onclick="loadDemo()">Try Demo</button>
@@ -854,6 +859,14 @@ body{padding-top:var(--safe-top);padding-bottom:var(--safe-bottom);}
         </div>
       </div>
 
+      <div>
+        <div class="lbl">Access Token <span style="font-weight:400;color:#64748b">(blank if script has no key check)</span></div>
+        <input id="settingsToken" placeholder="Required key for the web app, if enabled" style="width:100%;padding:10px 12px;border-radius:12px;border:1px solid #1e293b;background:#0a0e17;color:#f1f5f9;font-family:inherit;font-size:11px;outline:none">
+        <div style="font-size:10px;color:#94a3b8;margin-top:6px;line-height:1.5">
+          Sent as <code>?key=…</code> on every request. Stored only in this browser.
+        </div>
+      </div>
+
       <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;margin-top:6px">
         <div style="min-width:240px;flex:1">
           <div class="lbl">Auto-refresh</div>
@@ -884,11 +897,13 @@ const DASH_VERSION = "MULTIUSER_DUAL_URL";
 // Local-only settings
 const LS_PROXY_KEY="greentrak_proxy_url";
 const LS_PARSE_KEY="greentrak_parse_url";
+const LS_TOKEN_KEY="greentrak_access_token";
 const LS_REFRESH_KEY="greentrak_refresh_sec";
 const DEFAULT_REFRESH_SEC=60;
 
 let PROXY_URL = (localStorage.getItem(LS_PROXY_KEY)||"").trim();
 let PARSE_URL = (localStorage.getItem(LS_PARSE_KEY)||"").trim();
+let ACCESS_TOKEN = (localStorage.getItem(LS_TOKEN_KEY)||"").trim();
 let REFRESH_SEC = parseInt(localStorage.getItem(LS_REFRESH_KEY)||String(DEFAULT_REFRESH_SEC),10);
 if(!Number.isFinite(REFRESH_SEC) || REFRESH_SEC<10) REFRESH_SEC=DEFAULT_REFRESH_SEC;
 
@@ -896,6 +911,12 @@ if(!Number.isFinite(REFRESH_SEC) || REFRESH_SEC<10) REFRESH_SEC=DEFAULT_REFRESH_
 function getParseUrl(){
   var url = PARSE_URL || PROXY_URL;
   return url ? url.split('?')[0] : '';
+}
+
+// Append the access token (?key=...) to any backend URL, if one is set
+function withKey(url){
+  if(!ACCESS_TOKEN) return url;
+  return url + (url.indexOf('?')>=0 ? '&' : '?') + 'key=' + encodeURIComponent(ACCESS_TOKEN);
 }
 
 let DATA=null, currentTab='overview', countdown=REFRESH_SEC, timerInterval=null;
@@ -1116,6 +1137,8 @@ function showSetup(){
   if(inp) inp.value = PROXY_URL || '';
   const pinp=document.getElementById('parseInput');
   if(pinp) pinp.value = PARSE_URL || '';
+  const tinp=document.getElementById('tokenInput');
+  if(tinp) tinp.value = ACCESS_TOKEN || '';
 }
 function hideSetup(){
   document.getElementById('setup').style.display='none';
@@ -1131,6 +1154,10 @@ function saveProxyFromSetup(){
   PARSE_URL=pv;
   if(pv) localStorage.setItem(LS_PARSE_KEY, PARSE_URL);
   else localStorage.removeItem(LS_PARSE_KEY);
+  const tv=(document.getElementById('tokenInput').value||'').trim();
+  ACCESS_TOKEN=tv;
+  if(tv) localStorage.setItem(LS_TOKEN_KEY, ACCESS_TOKEN);
+  else localStorage.removeItem(LS_TOKEN_KEY);
   if(!localStorage.getItem(LS_REFRESH_KEY)) localStorage.setItem(LS_REFRESH_KEY, String(REFRESH_SEC));
   hideSetup();
   countdown=REFRESH_SEC;
@@ -1141,6 +1168,7 @@ function openSettings(){
   document.getElementById('testResult').style.display='none';
   document.getElementById('settingsProxy').value = PROXY_URL || '';
   document.getElementById('settingsParse').value = PARSE_URL || '';
+  document.getElementById('settingsToken').value = ACCESS_TOKEN || '';
   document.getElementById('settingsRefresh').value = String(REFRESH_SEC);
   document.getElementById('settingsModal').style.display='flex';
 }
@@ -1148,15 +1176,19 @@ function closeSettings(){ document.getElementById('settingsModal').style.display
 function saveSettings(){
   const proxy=(document.getElementById('settingsProxy').value||'').trim();
   const parseUrl=(document.getElementById('settingsParse').value||'').trim();
+  const token=(document.getElementById('settingsToken').value||'').trim();
   const refresh=parseInt(document.getElementById('settingsRefresh').value,10);
   if(!proxy) return alert('Data URL is required.');
   PROXY_URL=proxy;
   PARSE_URL=parseUrl;
+  ACCESS_TOKEN=token;
   REFRESH_SEC=Number.isFinite(refresh)?refresh:DEFAULT_REFRESH_SEC;
   countdown=REFRESH_SEC;
   localStorage.setItem(LS_PROXY_KEY, PROXY_URL);
   if(parseUrl) localStorage.setItem(LS_PARSE_KEY, PARSE_URL);
   else localStorage.removeItem(LS_PARSE_KEY);
+  if(token) localStorage.setItem(LS_TOKEN_KEY, ACCESS_TOKEN);
+  else localStorage.removeItem(LS_TOKEN_KEY);
   localStorage.setItem(LS_REFRESH_KEY, String(REFRESH_SEC));
   closeSettings();
   fetchData();
@@ -1168,9 +1200,12 @@ async function testConnection(){
   box.textContent='Testing…';
   const proxy=(document.getElementById('settingsProxy').value||'').trim() || PROXY_URL;
   if(!proxy){ box.textContent='Missing proxy URL.'; return; }
+  const tokEl=document.getElementById('settingsToken');
+  const tok=(tokEl && tokEl.value!==undefined) ? tokEl.value.trim() : ACCESS_TOKEN;
+  const proxyKeyed = tok ? (proxy + (proxy.indexOf('?')>=0?'&':'?') + 'key=' + encodeURIComponent(tok)) : proxy;
   const t0=performance.now();
   try{
-    const res=await fetch(proxy, {cache:'no-store'});
+    const res=await fetch(proxyKeyed, {cache:'no-store'});
     if(!res.ok) throw new Error('HTTP '+res.status);
     const text=await res.text();
     const t1=performance.now();
@@ -1186,9 +1221,11 @@ function resetAll(){
   if(!confirm('Reset settings on this device?')) return;
   localStorage.removeItem(LS_PROXY_KEY);
   localStorage.removeItem(LS_PARSE_KEY);
+  localStorage.removeItem(LS_TOKEN_KEY);
   localStorage.removeItem(LS_REFRESH_KEY);
   PROXY_URL='';
   PARSE_URL='';
+  ACCESS_TOKEN='';
   REFRESH_SEC=DEFAULT_REFRESH_SEC;
   countdown=REFRESH_SEC;
   closeSettings();
@@ -1365,7 +1402,7 @@ function runParse() {
   };
   
   var script = document.createElement('script');
-  script.src = base + '?action=parse&callback=' + cbName;
+  script.src = withKey(base + '?action=parse&callback=' + cbName);
   script.onerror = function() {
     btn.classList.remove('loading');
     btn.innerHTML = '✗ Network error';
@@ -1389,7 +1426,7 @@ async function fetchData(){
   btn.innerHTML='<span class="spinner"></span>Fetching...'; btn.classList.add('loading');
 
   try{
-    const res=await fetch(PROXY_URL, {cache:'no-store'});
+    const res=await fetch(withKey(PROXY_URL), {cache:'no-store'});
     if(!res.ok) throw new Error('HTTP '+res.status);
     const text=await res.text();
     if(!text || text.length<20) throw new Error('Empty response');
@@ -1637,7 +1674,7 @@ async function fetchNews(type, symbolsArr){
     }
     symbolsArr = Array.isArray(symbolsArr) ? symbolsArr : [];
     const symbolsParam = symbolsArr.length ? `&symbols=${encodeURIComponent(symbolsArr.join(','))}` : '';
-    const url = `${PROXY_URL}?mode=news&type=${encodeURIComponent(type)}${symbolsParam}`;
+    const url = withKey(`${PROXY_URL}?mode=news&type=${encodeURIComponent(type)}${symbolsParam}`);
 
     // JSONP helper (avoids CORS issues on GitHub Pages)
     function jsonpRequest(jsonUrl, timeoutMs = 12000){

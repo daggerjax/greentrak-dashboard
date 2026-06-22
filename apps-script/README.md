@@ -38,6 +38,10 @@ These live only in the deployed copy (not committed with real values):
 
 - `CONFIG.SHEET_ID` — the Google Sheet ID
 - `CONFIG.DRIVE_FOLDER_NAME` / `DRIVE_FOLDER_ID` — CSV import folder
+- `ACCESS_TOKEN` — shared secret. Left as `YOUR_ACCESS_TOKEN_HERE` in the repo;
+  when set to a real value the web app requires `?key=<token>` on every request
+  (the check is disabled while it equals the placeholder). The dashboard sends it
+  via Settings → Access Token (stored in localStorage, never committed).
 
 ## Routes (all via `doGet`)
 
