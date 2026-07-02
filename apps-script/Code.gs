@@ -34,7 +34,8 @@ var CONFIG = {
 
   // Account-specific handling (from Consolidator v2)
   DOUBLE_ACCOUNT: "6925",        // quantities in this account count ×2
-  OFFSHORE_ACCOUNTS: ["6925"]    // offshore CSVs put qty in col 10 instead of 8
+  OFFSHORE_ACCOUNTS: ["6925"],   // offshore CSVs put qty in col 10 instead of 8
+  IGNORE_ACCOUNTS: ["47004"]     // inactive accounts to skip entirely (matched by trailing digits)
 };
 
 // Access token: if set to a real value (in the deployed copy), every request must
@@ -290,9 +291,6 @@ function consolidate() {
       continue;
     }
 
-    fileCount++;
-    Logger.log("PROCESSING: " + entry.filename);
-
     var content = entry.file.getBlob().getDataAsString("latin1");
     var rows = Utilities.parseCsv(content);
 
@@ -301,6 +299,21 @@ function consolidate() {
     if (rows.length > 1 && rows[1] && rows[1][0]) {
       acctNum = rows[1][0].trim();
     }
+
+    // Skip accounts that are no longer active (matched by trailing digits)
+    var acctDigits = acctNum.replace(/\D/g, "");
+    var ignoreAcct = (CONFIG.IGNORE_ACCOUNTS || []).some(function(suf) {
+      suf = String(suf);
+      return suf.length > 0 && acctDigits.slice(-suf.length) === suf;
+    });
+    if (ignoreAcct) {
+      skippedCount++;
+      Logger.log("SKIPPED (inactive account " + acctNum + "): " + entry.filename);
+      continue;
+    }
+
+    fileCount++;
+    Logger.log("PROCESSING: " + entry.filename + " (acct " + acctNum + ")");
 
     var isOffshore = CONFIG.OFFSHORE_ACCOUNTS.indexOf(acctNum) !== -1;
     var multiplier = (acctNum === CONFIG.DOUBLE_ACCOUNT) ? 2 : 1;
