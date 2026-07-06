@@ -206,7 +206,7 @@ body{padding-top:var(--safe-top);padding-bottom:var(--safe-bottom);}
       <button class="rfb" id="demoExitBtn" onclick="exitDemo()" style="display:none;border-color:#f59e0b;color:#fff;background:rgba(245,158,11,.10)" title="Exit demo">Exit Demo</button>
       <button class="rfb" onclick="openSettings()" title="Settings">⚙</button>
       <div style="text-align:right">
-        <div id="dateStr" style="font-size:11px;color:#cbd5e1">Wednesday, April 15, 2026</div>
+        <div id="dateStr" style="font-size:11px;color:#cbd5e1">Loading…</div>
         <div style="display:flex;align-items:center;gap:5px;justify-content:flex-end;margin-top:2px">
           <div id="statusDot" style="width: 6px; height: 6px; border-radius: 50%; background: rgb(16, 185, 129); animation: 2s ease 0s infinite normal none running pl;"></div>
           <span id="statusStr" style="font-size:9px;color:#cbd5e1">LIVE · Next refresh: 34s</span>
@@ -1469,6 +1469,8 @@ function switchTab(t){
 // ─────────────────────────────────────────────────────────────────────────────
 // Render
 function render(){
+  const now=new Date();
+  document.getElementById('dateStr').textContent=now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   if(!DATA) return;
 
   const {positions, recap, benchmarks} = DATA;
@@ -1479,8 +1481,6 @@ function render(){
   const totGL  = recap.totalDollar ?? positions.reduce((s,p)=>s+(p.dollarGL||0),0);
   const totPct = recap.totalPct ?? (totVal>0 ? (totGL/totVal*100) : 0);
 
-  const now=new Date();
-  document.getElementById('dateStr').textContent=now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   if(demoMode){
     document.getElementById('statusStr').textContent='DEMO MODE — sample data';
     document.getElementById('statusDot').style.background = '#f59e0b';
