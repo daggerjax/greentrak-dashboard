@@ -9,7 +9,6 @@
 <meta name="apple-mobile-web-app-title" content="GreenTrak">
 <meta name="format-detection" content="telephone=no">
 <title>GreenTrak — Portfolio Intelligence</title>
-<link href="file:///Users/daggerjax/Downloads/GreenTrak%20%E2%80%94%20Portfolio%20Intelligence_files/css2" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'IBM Plex Mono','Fira Code',monospace;background:#0a0e17;color:#f1f5f9;min-height:100vh}
@@ -1442,7 +1441,10 @@ async function fetchData(){
     console.error('Fetch error:',e);
     document.getElementById('statusDot').style.background = '#ef4444';
     document.getElementById('loadMsg').textContent = 'Error: '+(e.message||e);
-    document.getElementById('loadSub').innerHTML = 'Check your proxy URL in Settings (⚙).';
+    document.getElementById('loadSub').innerHTML = 'Check your Data URL in Settings.'
+      + '<div style="margin-top:14px;display:flex;gap:8px;justify-content:center">'
+      + '<button class="rfb" onclick="openSettings()">⚙ Settings</button>'
+      + '<button class="rfb" onclick="resetAll()">Reset</button></div>';
     // keep app visible if it was already rendered once
     if(DATA) document.getElementById('statusStr').textContent='Refresh failed';
   }finally{
